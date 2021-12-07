@@ -9,7 +9,8 @@
 % initialize workspace
 clear all;
 close all; 
-
+AssertOpenGL;
+while KbCheck; end 
 
 % structures to pass general information between sub-experiments.
 global DATA Env
@@ -22,7 +23,33 @@ cd(pathstr);
 
 
 %% Capture demographic data
+inputError = 1;
+while inputError == 1
+    inputError = 0;
+    participantNumber = input('Participant number ---> ');
+    datafilename = ['ExpData\myDataP',num2str(participantNumber),'.mat'] ;
+    if exist(datafilename,"file")==2
+        disp(['Data for participant',num2str(participantNumber),'already exists, please chose another participant number.'])
+        inputError =1;
+    end
+end
+participantGender ='a'; % placeholder value
+while participantGender == 'a'% This is a free response demographic question, participant can enter any gender they wish to disclose or pass.
+    participantGender = input('Participant gender ---> ', 's');
+end
+participantAge = input('Participant age ---> ');
 
+participantHandedness = 'a'; % place holder value
+while participantHandedness ~= 'l' && participantHandedness ~= 'r' && participantHandedness ~= 'L' && participantHandedness ~= 'R'
+    participantHandedness = input('Left or right handed(L/R) ---> ', 's');
+end
+
+%Write demographic info to global data variable 
+DATA.participantNum = participantNumber;
+DATA.participantGen = participantGender;
+DATA.participantAge = participantAge;
+DATA.participantHan = participantHandedness;
+DATA.startTime = datestr(now, 'mmmm dd, yyyy HH:MM:SS.FFF');
 
 
 %% Enter data about which conditions, which tasks, etc.
@@ -30,7 +57,7 @@ cd(pathstr);
 % just as a for example:
 % are we running Experiment 1? If so, what's the condition?
 runTask1 = input('Run Experiment 1? Y/N', 's');
-if strcmp(runTask1, 'Y');
+if strcmp(runTask1, 'Y')
     conditionTask1 = input('Which condition for Experiment 1? [1,2,3] ---> ', 's');
     TasksToRun(1) = 1;
 else
@@ -40,7 +67,7 @@ end
 
 % same but for Experiment 2
 runTask2 = input('Run Experiment 2? Y/N', 's');
-if strcmp(runTask2, 'Y');
+if strcmp(runTask2, 'Y')
     conditionTask2 = input('Which condition for Experiment 2? [1,2,3] ---> ', 's');
     TasksToRun(2) = 1;
 else
@@ -75,6 +102,7 @@ DATA.Expt3_Condition = Env.Expt3_Condition;
 Env.Loc_Functions = [pwd filesep 'Functions'];
 Env.Loc_Data = [pwd filesep 'Data'];
 Env.Loc_Stimuli = [pwd filesep 'Stimuli'];
+addpath(Env.Loc_Functions);
 
 % ET license file (will need to change if we use a different device).
 Env.ET_licenseFile = [pwd filesep 'Functions' filesep 'license_key_00405485_-_The_University_of_NSW_IS404-100107012554'];
@@ -85,7 +113,7 @@ ScreenNumber = max(Screen('Screens')); % Selects the screen to display. Sole dis
 
 % experimental control variables
 DATA.useET = 0; % 0 = no ET, 1 = ET.
-DATA.useEEG = 1; % 0 = no EEG, 1 = EEG.
+DATA.useEEG = 0; % 0 = no EEG, 1 = EEG.
 DATA.debugging = 0;
 
 % soime stuff for psychtoolbox can be done here too. 
@@ -172,6 +200,7 @@ Env.Colours = Colours; clear Colours;
 
 if TasksToRun(1) == 1
     
+    ExperimentOne()
     % do calibrations as needed, show instructions as needed
     
     DataFromExpt = Experiment1(Env);
