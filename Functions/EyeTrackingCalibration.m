@@ -1,5 +1,5 @@
 function EyeTrackingCalibration(tol,buff)
-%% Written by Tess Barich 2021.
+%% Modified by Tess Barich 2021. Loosely Based on Tobii Pro Research Package
 %%Eye Tracking Set Up
 global  Env Calib %Declare the globals used in this function.
 %% Eyetracking Initiation
