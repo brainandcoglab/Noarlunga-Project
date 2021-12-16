@@ -123,6 +123,7 @@ Env.Loc_Functions = [pwd filesep 'Functions'];
 Env.Loc_Data = [pwd filesep 'Data'];
 Env.Loc_Stimuli = [pwd filesep 'Stimuli'];
 addpath(Env.Loc_Functions);
+addpath(Env.Loc_Stimuli);
 
 % ET license file (will need to change if we use a different device). Maybe
 % I can build this into the ET setup code to be more automated? <- Done. It
@@ -261,7 +262,7 @@ end
 
 if TasksToRun(1) == 1
     
-    ExperimentOne()
+    ExperimentOne(Env.Expt1_Condition,)
     % do calibrations as needed, show instructions as needed
     
     DataFromExpt = Experiment1(Env);
