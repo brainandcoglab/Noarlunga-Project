@@ -39,3 +39,6 @@ octave-workspace
 
 # oren sometimes saves a large file with this name. Ignore it. 
 Debug_workspace.mat
+
+3 Ignore command_history 
+command_history.txt

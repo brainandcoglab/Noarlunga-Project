@@ -13,7 +13,7 @@ AssertOpenGL;
 while KbCheck; end 
 
 % structures to pass general information between sub-experiments.
-global DATA Env 
+global DATA Env Calib
 
 % automatically switch pwd to location of current file, even if user
 % declared otherwise (accidentally). (Lots of calls to pwd below.) 
@@ -125,7 +125,10 @@ Env.Loc_Stimuli = [pwd filesep 'Stimuli'];
 addpath(Env.Loc_Functions);
 
 % ET license file (will need to change if we use a different device). Maybe
-% I can build this into the ET setup code to be more automated?
+% I can build this into the ET setup code to be more automated? <- Done. It
+% takes the most recent file in the License folder and uses that. So as
+% long as you keep the license you want to use the most up to date, it
+% works.
 Env.ET_licenseFile = [pwd filesep 'Functions' filesep 'license_key_00405485_-_The_University_of_NSW_IS404-100107012554'];
 Env.ETAddress = 'tobii-ttp://IS404-100107012554';
 
@@ -184,7 +187,7 @@ Priority(Maxpriority);
 Screen('BlendFunction', Env.MainWindow, 'GL_SRC_ALPHA', 'GL_ONE_MINUS_SRC_ALPHA');% Set up alpha-blending for smooth (anti-aliased) lines
 %Finished Psychtoolbox
 %%
-Screen('CloseAll')
+Screen('Close', Env.MainWindow);
 
 
 % Triggers for EEG (and/or ET). 
@@ -241,7 +244,7 @@ Env.Triggers = Triggers;  clear Triggers;
 
 %% Run the tasks (and output partial info/data as you go).
 % Eye Tracking Calibration 
-if DATA.useET ==1 % 0 = no ET, 1 = ET.
+if DATA.useET ==1% 0 = no ET, 1 = ET.
     DATA.usedefaultETSettings=input('Would you like to keep the default settings (2 degrees tolerance, 1 degree bufferzone)? Y/N--->'     , 's'); 
     if contains(DATA.usedefaultETSettings,'Y','IgnoreCase', true)
         DATA.ETTol= DATA.ETTol; 
@@ -253,8 +256,6 @@ if DATA.useET ==1 % 0 = no ET, 1 = ET.
 
     EyeTrackingCalibration(DATA.ETTol,DATA.ETBuf);
     
-else 
-    return 
 end 
 
 
@@ -295,6 +296,6 @@ end
 
 
 %% wrap up and clean up.
-sca;
-clear all;
+% sca;
+% clear all;
 
