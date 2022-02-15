@@ -31,7 +31,7 @@ visualangleforgazebuffer =buff; %pass through the inputted variables from Noarlu
 dotSizePix = 20;% Dot size in pixels
 Calib.MyEyetracker.get_gaze_data();% Start collecting data
 % The subsequent calls return the current values in the stream buffer.
-Screen ('OpenWindow', ScreenNumber,Env.Colours.LightGrey);%Open a window using psychimaging and colour it light grey
+Screen ('OpenWindow', Env.MainWindow,Env.Colours.LightGrey);%Open a window using psychimaging and colour it light grey
 Screen('TextSize', Env.MainWindow, 20); %Set text size to 20pt.
 
 while ~KbCheck %Show the following display until any key is pressed. 
@@ -196,5 +196,6 @@ while calibrating
         end
     end
 end
+Screen('Close', Env.MainWindow);
 end
 %% END CALIBRATION

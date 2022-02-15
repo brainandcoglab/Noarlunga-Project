@@ -2,21 +2,21 @@
 % Names: Tess Barich & Oren Griffiths (Dec 2021)
 % License: MIT.
 
-% Goal: overarching main script that captures demographics, organizes 
+% Goal: overarching main script that captures demographics, organizes
 % access to the individual experimental tasks, and saves data in format
 % that we can readily analyze.
 
 % initialize workspace
 clear all;
-close all; 
+close all;
 AssertOpenGL;
-while KbCheck; end 
+while KbCheck; end
 
 % structures to pass general information between sub-experiments.
 global DATA Env Calib
 
 % automatically switch pwd to location of current file, even if user
-% declared otherwise (accidentally). (Lots of calls to pwd below.) 
+% declared otherwise (accidentally). (Lots of calls to pwd below.)
 [pathstr,name,ext]  = fileparts(mfilename('fullpath'));
 cd(pathstr);
 
@@ -44,7 +44,7 @@ while participantHandedness ~= 'l' && participantHandedness ~= 'r' && participan
     participantHandedness = input('Left or right handed(L/R) ---> ', 's');
 end
 
-%Write demographic info to global data variable 
+%Write demographic info to global data variable
 DATA.participantNum = participantNumber;
 DATA.participantGen = participantGender;
 DATA.participantAge = participantAge;
@@ -53,67 +53,82 @@ DATA.startTime = datestr(now, 'mmmm dd, yyyy HH:MM:SS.FFF');
 
 
 %% Enter data about which conditions, which tasks, etc.
-Exp1Con =[1:3];
-Exp2Con =[1:3];
-Exp3Con =[1:3];
+Exp1Con =[1:4];
+Exp2Con =[1:4];
+Exp3Con =[1:4];
 % just as a for example:
 % are we running Experiment 1? If so, what's the condition?
+GoOn=0;
 runTask1 = input('Run Experiment 1? Y/N -->'   , 's');
 switch true
     case contains(runTask1, 'Y','IgnoreCase', true) %Changed 'strcmp' to 'contains' to make more versatile. looks for a y anywhere in input
-    conditionTask1 = input('Which condition for Experiment 1? [1,2,3] ---> ');
-    if ismember(conditionTask1,Exp1Con) %Check that input is actually a condition value
-    TasksToRun(1) = 1; % if condition exists, Experiment one is listed to run. 
-    else 
-        warning('Condition does not exist, Experiment 1 will not be run')%tell user the value they entered is not a known condition.
-    TaskToRun(1)=0; % List as not running experiment if condition value does not exist
-    end % Should I make this a loop so they have another opportunity to enter a condition value?
+        while GoOn==0
+            conditionTask1 = input('Which condition for Experiment 1? [1,2,3] ---> ');
+            if ismember(conditionTask1,Exp1Con) %Check that input is actually a condition value
+                TasksToRun(1) = 1; % if condition exists, Experiment one is listed to run.
+                GoOn=1;
+            else
+                warning('Condition does not exist, Please try again')%tell user the value they entered is not a known condition.
+                TaskToRun(1)=0; % List as not running experiment if condition value does not exist
+            end % Should I make this a loop so they have another opportunity to enter a condition value?
+        end
     otherwise
-    conditionTask1 = []; % maybe should make task fail with empty condition? <- I've done something above, is this what you meant? TB
-    TasksToRun(1) = 0;
+        conditionTask1 = []; % maybe should make task fail with empty condition? <- I've done something above, is this what you meant? TB
+        TasksToRun(1) = 0;
 end
 
 % same but for Experiment 2
+GoOn=0;
 runTask2 = input('Run Experiment 2? Y/N -->'   , 's');
 switch true
     case contains(runTask2, 'Y','IgnoreCase', true) %Changed 'strcmp' to 'contains' to make more versatile. looks for a y anywhere in input
-    conditionTask2 = input('Which condition for Experiment 2? [1,2,3] ---> ');
-    if ismember(conditionTask2,Exp2Con) %Check that input is actually a condition value
-    TasksToRun(2) = 1;% if condition exists, Experiment one is listed to run. 
-    else 
-        warning('Condition does not exist, Experiment 2 will not be run') %tell user the value they entered is not a known condition.
-    TaskToRun(2)=0; %list as not running experiment if condition value does not exist.
-    end 
+        while GoOn ==0
+            conditionTask2 = input('Which condition for Experiment 2? [1,2,3] ---> ');
+            if ismember(conditionTask2,Exp2Con) %Check that input is actually a condition value
+                TasksToRun(2) = 1;% if condition exists, Experiment one is listed to run.
+                GoOn=1;
+            else
+                warning('Condition does not exist, Please try again') %tell user the value they entered is not a known condition.
+                TaskToRun(2)=0; %list as not running experiment if condition value does not exist.
+
+            end
+        end
     otherwise
-    conditionTask2 = []; % condition left empty as experiment was listed as not to be run.
-    TasksToRun(2) = 0; % experiment listed as not to be run
+        conditionTask2 = []; % condition left empty as experiment was listed as not to be run.
+        TasksToRun(2) = 0; % experiment listed as not to be run
 end
 
 % Same but for Experiment 3
+GoOn=0;
 runTask3 = input('Run Experiment 3? Y/N -->'   , 's');
 switch true
     case contains(runTask3, 'Y','IgnoreCase', true) %Changed 'strcmp' to 'contains' to make more versatile. looks for a y anywhere in input
-    conditionTask3 = input('Which condition for Experiment 3? [1,2,3] ---> ');
-    if ismember(conditionTask3,Exp3Con) %Check that input is actually a condition value
-    TasksToRun(3) = 1;% if condition exists, Experiment one is listed to run. 
-    else 
-        warning('Condition does not exist, Experiment 3 will not be run') %tell user the value they entered is not a known condition.
-    TaskToRun(3)=0; %list as not running experiment if condition value does not exist.
-    end 
+        while GoOn==0
+            conditionTask3 = input('Which condition for Experiment 3? [1,2,3] ---> ');
+
+            if ismember(conditionTask3,Exp3Con) %Check that input is actually a condition value
+                TasksToRun(3) = 1;% if condition exists, Experiment one is listed to run.
+                GoOn=1;
+            else
+                warning('Condition does not exist, Please try again') %tell user the value they entered is not a known condition.
+                TaskToRun(3)=0; %list as not running experiment if condition value does not exist.
+            end
+        end
     otherwise
-    conditionTask3 = []; % condition left empty as experiment was listed as not to be run.
-    TasksToRun(3) = 0; % experiment listed as not to be run
+        conditionTask3 = []; % condition left empty as experiment was listed as not to be run.
+        TasksToRun(3) = 0; % experiment listed as not to be run.
 end
 
 
-% declare what condition was selected in output files. 
+
+% declare what condition was selected in output files.
 Env.Expt1_Condition = conditionTask1;
 Env.Expt2_Condition = conditionTask2;
 Env.Expt3_Condition = conditionTask3;
-% save that value in output data file too. 
-DATA.Expt1_Condition = Env.Expt1_Condition; 
-DATA.Expt2_Condition = Env.Expt2_Condition; 
-DATA.Expt3_Condition = Env.Expt3_Condition; 
+% save that value in output data file too.
+DATA.Expt1_Condition = Env.Expt1_Condition;
+DATA.Expt2_Condition = Env.Expt2_Condition;
+DATA.Expt3_Condition = Env.Expt3_Condition;
 
 
 
@@ -130,18 +145,18 @@ addpath(Env.Loc_Stimuli);
 % takes the most recent file in the License folder and uses that. So as
 % long as you keep the license you want to use the most up to date, it
 % works.
-Env.ET_licenseFile = [pwd filesep 'Functions' filesep 'license_key_00405485_-_The_University_of_NSW_IS404-100107012554'];
-Env.ETAddress = 'tobii-ttp://IS404-100107012554';
+% Env.ET_licenseFile = [pwd filesep 'Functions' filesep 'license_key_00405485_-_The_University_of_NSW_IS404-100107012554'];
+% Env.ETAddress = 'tobii-ttp://IS404-100107012554';
 
 % experimental control variables
-DATA.useET = 1; % 0 = no ET, 1 = ET.
+DATA.useET = 0; % 0 = no ET, 1 = ET.
 DATA.ETTol= 2; %2 degrees visual angle tolerance for calibrations
 DATA.ETBuf =1; % 1 degrees addition buffer for ET tolerance
 DATA.useEEG = 0; % 0 = no EEG, 1 = EEG.
 DATA.debugging = 0;
 
 % soime stuff for psychtoolbox can be done here too. Definitely going to
-% add a bit more here to ensure the ET calibration works properly. 
+% add a bit more here to ensure the ET calibration works properly.
 
 %% Colour shortcuts so we can call the screens with the short cuts in the Psychtoolbox Setup
 % colour shortcuts
@@ -150,7 +165,7 @@ Colours.White = [255 255 255];
 Colours.Yellow = [255 255 0];
 Colours.Magenta = [255 0 255];
 Colours.Cyan = [0 255 255];
-Colours.Red = [255 0 0];
+Colours.Red = [255 0 0 ];
 Colours.RedTransparent = [255 0 0 64];
 Colours.Green = [0 255 0];
 Colours.GreenTransparent = [0 255 0 64]; % with alpha value for blending.
@@ -159,6 +174,7 @@ Colours.BlueTransparent = [0 0 255 64];
 Colours.Grey = [127 127 127];
 Colours.DarkGrey = [64 64 64];
 Colours.LightGrey = [192 192 192];
+Colours.Alpha =[0,0,0,0];
 
 Env.Colours = Colours; clear Colours;
 disp('Setting up psychtoolbox main window.');
@@ -168,7 +184,8 @@ pause(2)
 PsychDefaultSetup(2);
 Screen ('Preference', 'SkipSyncTests', 2);% change this to 0 when actually running experiments
 ScreenNumber = max(Screen('Screens')); % Selects the screen to display. Sole display = 0.
-[Env.MainWindow, Env.windowRect] = Screen ('OpenWindow', ScreenNumber,Env.Colours.LightGrey);%Open a window using psychimaging and colour it light grey
+[Env.MainWindow, Env.windowRect] = Screen ('OpenWindow', ScreenNumber,Env.Colours.LightGrey,[],[],[],[],[],4);%Open a window using psychimaging and colour it light grey
+[Env.OffScreenWindow]= Screen('OpenOffscreenWindow',Env.MainWindow,Env.Colours.Alpha);
 Env.ScreenInfo= Screen('Resolution', Env.MainWindow); % Get some screen info including resolution, pixel size and hz.
 Env.ScreenInfo.Resolution = [Env.ScreenInfo.width, Env.ScreenInfo.height]; % list the width and height in pixels to a resolution variable
 Env.ScreenInfo.Centre = Env.ScreenInfo.Resolution/2;;% Get the centre coordinate of the window
@@ -180,18 +197,20 @@ Env.ScreenInfo.diagonalmmcount= sqrt(Env.ScreenInfo.mmWidth^2+Env.ScreenInfo.mmH
 Env.ScreenInfo.diagonalcmcount= sqrt(Env.ScreenInfo.cmWidth^2+Env.ScreenInfo.cmHeight^2); % diagonal cm size in case needed for post measurements
 Env.ScreenInfo.pixelpermm= Env.ScreenInfo.diagonalmmcount\Env.ScreenInfo.diagonalpixelcount; % pixel per mm calculation for ET calibration and visual angle calcs
 Env.ScreenInfo.pixelpercm= Env.ScreenInfo.diagonalcmcount\Env.ScreenInfo.diagonalpixelcount;% pixel per mm calculation for ET calibration and visual angle calcs
-Env.ScreenInfo.dotpitch=Env.ScreenInfo.diagonalcmcount/Env.ScreenInfo.diagonalpixelcount*10; %dot pitch calculations. 
+Env.ScreenInfo.dotpitch=Env.ScreenInfo.diagonalcmcount/Env.ScreenInfo.diagonalpixelcount*10; %dot pitch calculations.
 DATA.FlipTime = Screen('GetFlipInterval', Env.MainWindow);% Query the frame duration
-Maxpriority = Priority(2);%set priority to max. 
+Maxpriority = Priority(2);%set priority to max.
 Priority(Maxpriority);
-[~,~, Env.MouseInfo]= GetMouseIndices; % Get mouse info for Experiment Confidence Slider response 
+[~,~, Env.MouseInfo]= GetMouseIndices; % Get mouse info for Experiment Confidence Slider response
 Screen('BlendFunction', Env.MainWindow, 'GL_SRC_ALPHA', 'GL_ONE_MINUS_SRC_ALPHA');% Set up alpha-blending for smooth (anti-aliased) lines
+Screen('BlendFunction', Env.OffScreenWindow, 'GL_SRC_ALPHA', 'GL_ONE_MINUS_SRC_ALPHA');% Set up alpha-blending for smooth (anti-aliased) lines
+
 %Finished Psychtoolbox
 %%
-Screen('Close', Env.MainWindow);
+%Screen('Close', Env.MainWindow);
 
 
-% Triggers for EEG (and/or ET). 
+% Triggers for EEG (and/or ET).
 % Just putting some token values in here for now. Limited of 20:256.
 
 % Practice
@@ -224,7 +243,7 @@ Triggers.Training.StartTrial = 141;
 Triggers.Training.FriendTrial = 142;
 Triggers.Training.FoeTrial = 143;
 Triggers.Training.NeitherTrial = 144;
-Triggers.Training.Response = 145;
+Triggers.Training.Response = 145; 
 Triggers.Training.TimeOut = 146;
 Triggers.Training.EndTrial = 147;
 % Test
@@ -244,37 +263,37 @@ Env.Triggers = Triggers;  clear Triggers;
 
 
 %% Run the tasks (and output partial info/data as you go).
-% Eye Tracking Calibration 
+% Eye Tracking Calibration
 if DATA.useET ==1% 0 = no ET, 1 = ET.
-    DATA.usedefaultETSettings=input('Would you like to keep the default settings (2 degrees tolerance, 1 degree bufferzone)? Y/N--->'     , 's'); 
+    DATA.usedefaultETSettings=input('Would you like to keep the default settings (2 degrees tolerance, 1 degree bufferzone)? Y/N--->'     , 's');
     if contains(DATA.usedefaultETSettings,'Y','IgnoreCase', true)
-        DATA.ETTol= DATA.ETTol; 
-        DATA.ETBuf = DATA.ETBuf; 
-    else 
-        DATA.ETTol = input('What visual angle tolerance would you like? [1,2,3 etc]--->'   ); 
-        DATA.ETBuf = input('What visual angle additional buffer would you like? [1,2,3 etc] --->'   ); 
-    end 
+        DATA.ETTol= DATA.ETTol;
+        DATA.ETBuf = DATA.ETBuf;
+    else
+        DATA.ETTol = input('What visual angle tolerance would you like? [1,2,3 etc]--->'   );
+        DATA.ETBuf = input('What visual angle additional buffer would you like? [1,2,3 etc] --->'   );
+    end
 
     EyeTrackingCalibration(DATA.ETTol,DATA.ETBuf);
-    
-end 
+
+end
 
 
 if TasksToRun(1) == 1
-    
-    ExperimentOne(Env.Expt1_Condition,)
-    % do calibrations as needed, show instructions as needed
-    
-    DataFromExpt = Experiment1(Env);
+%CreateJar(Env.Loc_Stimuli,Env.MainWindow,)
+      ExperimentOne(Env.Expt1_Condition);
+    %     % do calibrations as needed, show instructions as needed
+
+    DataFromExpt = ExperimentOne(Env);
     % also have the option for updating DATA global directly within
     % function, if needed
     DATA.E1_raw = DataFromExpt;
 end
 
 if TasksToRun(2) == 1
-    
+
     % do calibrations as needed, show instructions as needed
-    
+
     DataFromExpt = Experiment2(Env);
     % also have the option for updating DATA global directly within
     % function, if needed
@@ -282,18 +301,18 @@ if TasksToRun(2) == 1
 end
 
 if TasksToRun(3) == 1
-    
+
     % do calibrations as needed, show instructions as needed
-    
+
     DataFromExpt = Experiment3(Env);
     % also have the option for updating DATA global directly within
     % function, if needed
     DATA.E3_raw = DataFromExpt;
 end
 
-%% collate data for final output. 
+%% collate data for final output.
 
-% might need to e.g. trim gaze data so can do that here. 
+% might need to e.g. trim gaze data so can do that here.
 
 
 %% wrap up and clean up.
