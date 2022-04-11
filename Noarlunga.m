@@ -183,12 +183,14 @@ pause(2)
 %% PsychtoolBox setup
 PsychDefaultSetup(2);
 Screen ('Preference', 'SkipSyncTests', 2);% change this to 0 when actually running experiments
+Screen ('Preference', 'DefaultFontSize');% change this to 0 when actually running experiments
+
 ScreenNumber = max(Screen('Screens')); % Selects the screen to display. Sole display = 0.
 [Env.MainWindow, Env.windowRect] = Screen ('OpenWindow', ScreenNumber,Env.Colours.LightGrey,[],[],[],[],[],4);%Open a window using psychimaging and colour it light grey
 [Env.OffScreenWindow]= Screen('OpenOffscreenWindow',Env.MainWindow,Env.Colours.Alpha);
 Env.ScreenInfo= Screen('Resolution', Env.MainWindow); % Get some screen info including resolution, pixel size and hz.
 Env.ScreenInfo.Resolution = [Env.ScreenInfo.width, Env.ScreenInfo.height]; % list the width and height in pixels to a resolution variable
-Env.ScreenInfo.Centre = Env.ScreenInfo.Resolution/2;;% Get the centre coordinate of the window
+Env.ScreenInfo.Centre = Env.ScreenInfo.Resolution/2;% Get the centre coordinate of the window
 [Env.ScreenInfo.mmWidth, Env.ScreenInfo.mmHeight]= Screen('DisplaySize',Env.MainWindow); % Get more screen info on Display Size in mm to transform to cm and use to calculate visual angles
 Env.ScreenInfo.cmWidth=Env.ScreenInfo.mmWidth/10; %conversion to cm size
 Env.ScreenInfo.cmHeight=Env.ScreenInfo.mmHeight/10;% conversion to cm size
@@ -198,7 +200,7 @@ Env.ScreenInfo.diagonalcmcount= sqrt(Env.ScreenInfo.cmWidth^2+Env.ScreenInfo.cmH
 Env.ScreenInfo.pixelpermm= Env.ScreenInfo.diagonalmmcount\Env.ScreenInfo.diagonalpixelcount; % pixel per mm calculation for ET calibration and visual angle calcs
 Env.ScreenInfo.pixelpercm= Env.ScreenInfo.diagonalcmcount\Env.ScreenInfo.diagonalpixelcount;% pixel per mm calculation for ET calibration and visual angle calcs
 Env.ScreenInfo.dotpitch=Env.ScreenInfo.diagonalcmcount/Env.ScreenInfo.diagonalpixelcount*10; %dot pitch calculations.
-DATA.FlipTime = Screen('GetFlipInterval', Env.MainWindow);% Query the frame duration
+DATA.FlipInterval = Screen('GetFlipInterval', Env.MainWindow);% Query the frame duration
 Maxpriority = Priority(2);%set priority to max.
 Priority(Maxpriority);
 [~,~, Env.MouseInfo]= GetMouseIndices; % Get mouse info for Experiment Confidence Slider response
@@ -284,7 +286,7 @@ if TasksToRun(1) == 1
       ExperimentOne(Env.Expt1_Condition);
     %     % do calibrations as needed, show instructions as needed
 
-    DataFromExpt = ExperimentOne(Env);
+    DataFromExpt = DATA.ExperimentOne;%ExperimentOne(Env);
     % also have the option for updating DATA global directly within
     % function, if needed
     DATA.E1_raw = DataFromExpt;
@@ -301,7 +303,7 @@ if TasksToRun(2) == 1
 end
 
 if TasksToRun(3) == 1
-
+ExperimentThree(Env.Expt3_Condition);
     % do calibrations as needed, show instructions as needed
 
     DataFromExpt = Experiment3(Env);

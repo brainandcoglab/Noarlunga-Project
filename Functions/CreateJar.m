@@ -12,6 +12,8 @@ Bead = contains([{Env.Stimuli.Name}],'Bead');
 [~,Bead]=max([Bead(:)]);
 JarSize =Env.Stimuli(Jar).Size;
 BeadSize = Env.Stimuli(Bead).Size;
+Env.Stimuli(Jar).Size = Env.Stimuli(Jar).Size;
+
 JarTexture = Env.Stimuli(Jar).TexturePointer;
 BeadTexture = repmat({Env.Stimuli(Bead).TexturePointer},(MainNumber+SecondaryNumber),1);
 centredJarRect = cell({my_centreTexture(JarSize(1),JarSize(2),Env.ScreenInfo.Centre(1),Env.ScreenInfo.Centre(2))});
@@ -19,10 +21,10 @@ SizeOfJar = [Env.ScreenInfo.Centre(1)-(Env.Stimuli(Jar).Size(1)/2),...
     Env.ScreenInfo.Centre(2)-(Env.Stimuli(Jar).Size(2)/2),...
     Env.ScreenInfo.Centre(1)+(Env.Stimuli(Jar).Size(1)/2),...
     Env.ScreenInfo.Centre(2)+(Env.Stimuli(Jar).Size(2)/2)];
-SpaceInsideJar = [Env.ScreenInfo.Centre(1)-(Env.Stimuli(Jar).Size(1)/2)+43,...
-    Env.ScreenInfo.Centre(2)-(Env.Stimuli(Jar).Size(2)/2)+30,...
-    Env.ScreenInfo.Centre(1)+(Env.Stimuli(Jar).Size(1)/2)-43,...
-    Env.ScreenInfo.Centre(2)+(Env.Stimuli(Jar).Size(2)/2)-30];
+SpaceInsideJar = [Env.ScreenInfo.Centre(1)-(Env.Stimuli(Jar).Size(1)/2)+(44),...
+    Env.ScreenInfo.Centre(2)-(Env.Stimuli(Jar).Size(2)/2)+(30),...
+    Env.ScreenInfo.Centre(1)+(Env.Stimuli(Jar).Size(1)/2)-(44),...
+    Env.ScreenInfo.Centre(2)+(Env.Stimuli(Jar).Size(2)/2)-(30)];
 
 
    centredJarRect = cell2mat(centredJarRect);
@@ -33,10 +35,10 @@ for MakeMyPair = 1:2
 while length(BeadXplacement)~=(MainNumber+SecondaryNumber)
     BeadXplacement = SpaceInsideJar(1):SpaceInsideJar(3);
     BeadYplacement = SpaceInsideJar(2):SpaceInsideJar(4);
-    BeadXIdx = randperm(length(BeadXplacement),(MainNumber+SecondaryNumber));
-    BeadYIdx = randperm(length(BeadYplacement),(MainNumber+SecondaryNumber));
-    BeadXplacement = BeadXplacement(:,BeadXIdx);
-    BeadYplacement = BeadYplacement(:,BeadYIdx);
+    BeadXIdx = randi([BeadXplacement(1),BeadXplacement(end)],[1,(MainNumber+SecondaryNumber)]);
+    BeadYIdx = randi([BeadYplacement(1),BeadYplacement(end)],[1,(MainNumber+SecondaryNumber)]);%randperm(length(BeadYplacement),(MainNumber+SecondaryNumber));
+    BeadXplacement =  BeadXIdx; %BeadXplacement(:,BeadXIdx);
+    BeadYplacement = BeadYIdx; %BeadYplacement(:,BeadYIdx);
     [BeadXY,BeadOrder] = unique([BeadXplacement;BeadYplacement]','rows','first');
     SortXYBead= sortrows([BeadXY,BeadOrder],3)';
     BeadXplacement = SortXYBead(1,:);
@@ -82,7 +84,6 @@ Screen('DrawTextures',window2,JarTexture,[],[centredJarRect]);
 
 
 if MakeMyPair ==1
-    test=Screen('GetImage',window2,[960,540,1060,640],[],[],4);
 OffScreenTextureOneOne = Screen('GetImage',window2,[SizeOfJar],[],[],4);
 OffScreenTextureOne= Screen('MakeTexture',window,OffScreenTextureOneOne,[]);
 CreatedJarOne = OffScreenTextureOne;
@@ -96,7 +97,8 @@ Env.JarTwo = CreatedJarTwo;
 end 
 Screen('Flip',window);
 Screen('Close',window2) %cannot flip the offscreen window, instead need to close the window and reopen it. 
-[window2]= Screen('OpenOffscreenWindow',window,Env.Colours.Alpha); %open new offscreen window for second drawing
+[window2]= Screen('OpenOffscreenWindow',window,Env.Colours.Alpha); 
+Env.OffScreenWindow =window2;%open new offscreen window for second drawing
 Screen('BlendFunction', window2, 'GL_SRC_ALPHA', 'GL_ONE_MINUS_SRC_ALPHA');% Set up alpha-blending for smooth (anti-aliased) lines specifically to repeat this process of drawing to the offscreen window
 
 end 

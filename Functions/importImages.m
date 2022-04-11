@@ -19,6 +19,7 @@ for MakeImages =1: length(directMe) %for 1 to length of our dir
         Env.Stimuli(Pointer).TexturePointer= Screen('MakeTexture', window,img,[],4); %Create the texture and save pointer to the global environment 
         Env.Stimuli(Pointer).ImageMade = img; %log the image data into the global environment. 
         Env.Stimuli(Pointer).Size = [width(Env.Stimuli(Pointer).ImageMade),height(Env.Stimuli(Pointer).ImageMade)];
+        Env.Stimuli(Pointer).OriginalSize =[width(Env.Stimuli(Pointer).ImageMade),height(Env.Stimuli(Pointer).ImageMade)];
     end
 end
 
