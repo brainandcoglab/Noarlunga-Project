@@ -35,6 +35,8 @@ codegen/
 # Octave session info
 octave-workspace
 
+#
+.db
 # End of https://www.toptal.com/developers/gitignore/api/matlab
 
 # oren sometimes saves a large file with this name. Ignore it. 
