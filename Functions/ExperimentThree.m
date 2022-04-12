@@ -85,8 +85,10 @@ switch phases
         end
 
     case 2
+        Screen('TextSize', Env.MainWindow, 25); %  need to reset pen size after.
 
-        DrawFormattedText(Env.MainWindow,sprintf('%s',RecognitionInstructions),'center','center',[],60);
+
+        DrawFormattedText(Env.MainWindow,sprintf('%s',RecognitionInstructions),'center','center',[],70);
         Screen('DrawingFinished',Env.MainWindow);
         ScreenFlipTime = FlipTime+(DATA.WaitFrameInput-0.5)*DATA.FlipInterval;
         FlipTime=  Screen('Flip',Env.MainWindow,ScreenFlipTime);
