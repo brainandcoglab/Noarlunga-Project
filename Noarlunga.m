@@ -13,13 +13,12 @@ AssertOpenGL;
 while KbCheck; end
 
 % structures to pass general information between sub-experiments.
-global DATA Env Calib
+global DATA Env Calib Pointer  QNumbers
 
 % automatically switch pwd to location of current file, even if user
 % declared otherwise (accidentally). (Lots of calls to pwd below.)
 [pathstr,name,ext]  = fileparts(mfilename('fullpath'));
 cd(pathstr);
-
 
 
 %% Capture demographic data
@@ -59,66 +58,84 @@ Exp3Con =[1:4];
 % just as a for example:
 % are we running Experiment 1? If so, what's the condition?
 GoOn=0;
-runTask1 = input('Run Experiment 1? Y/N -->'   , 's');
-switch true
-    case contains(runTask1, 'Y','IgnoreCase', true) %Changed 'strcmp' to 'contains' to make more versatile. looks for a y anywhere in input
-        while GoOn==0
-            conditionTask1 = input('Which condition for Experiment 1? [1,2,3] ---> ');
-            if ismember(conditionTask1,Exp1Con) %Check that input is actually a condition value
-                TasksToRun(1) = 1; % if condition exists, Experiment one is listed to run.
-                GoOn=1;
-            else
-                warning('Condition does not exist, Please try again')%tell user the value they entered is not a known condition.
-                TaskToRun(1)=0; % List as not running experiment if condition value does not exist
-            end % Should I make this a loop so they have another opportunity to enter a condition value?
-        end
-    otherwise
-        conditionTask1 = []; % maybe should make task fail with empty condition? <- I've done something above, is this what you meant? TB
-        TasksToRun(1) = 0;
+RunExp=0;
+while RunExp==0
+    runTask1 = input('Run Experiment 1? Y/N -->'   , 's');
+    switch true
+        case (contains(runTask1, 'Y','IgnoreCase', true) && ~contains(runTask1, 'N','IgnoreCase', true)) %Changed 'strcmp' to 'contains' to make more versatile. looks for a y anywhere in input
+            while GoOn==0
+                conditionTask1 = input('Which condition for Experiment 1? [1,2,3] ---> ');
+                if ismember(conditionTask1,Exp1Con) %Check that input is actually a condition value
+                    TasksToRun(1) = 1; % if condition exists, Experiment one is listed to run.
+                    GoOn=1;
+                    RunExp =1;
+                else
+                    warning('Condition does not exist, Please try again')%tell user the value they entered is not a known condition.
+                    TaskToRun(1)=0; % List as not running experiment if condition value does not exist
+                end % Should I make this a loop so they have another opportunity to enter a condition value?
+            end
+
+        case (~contains(runTask1, 'Y','IgnoreCase', true) && contains(runTask1, 'N','IgnoreCase', true)) %Changed 'strcmp' to 'contains' to make more versatile. looks for a y anywhere in input
+            conditionTask1 = []; % maybe should make task fail with empty condition? <- I've done something above, is this what you meant? TB
+            TasksToRun(1) = 0;
+            RunExp =1;
+
+    end
 end
 
 % same but for Experiment 2
 GoOn=0;
-runTask2 = input('Run Experiment 2? Y/N -->'   , 's');
-switch true
-    case contains(runTask2, 'Y','IgnoreCase', true) %Changed 'strcmp' to 'contains' to make more versatile. looks for a y anywhere in input
-        while GoOn ==0
-            conditionTask2 = input('Which condition for Experiment 2? [1,2,3] ---> ');
-            if ismember(conditionTask2,Exp2Con) %Check that input is actually a condition value
-                TasksToRun(2) = 1;% if condition exists, Experiment one is listed to run.
-                GoOn=1;
-            else
-                warning('Condition does not exist, Please try again') %tell user the value they entered is not a known condition.
-                TaskToRun(2)=0; %list as not running experiment if condition value does not exist.
+RunExp=0;
+while RunExp==0
+    runTask2 = input('Run Experiment 2? Y/N -->'   , 's');
+    switch true
+        case contains(runTask2, 'Y','IgnoreCase', true) && ~contains(runTask2, 'N','IgnoreCase', true) %Changed 'strcmp' to 'contains' to make more versatile. looks for a y anywhere in input
+            while GoOn ==0
+                conditionTask2 = input('Which condition for Experiment 2? [1,2,3] ---> ');
+                if ismember(conditionTask2,Exp2Con) %Check that input is actually a condition value
+                    TasksToRun(2) = 1;% if condition exists, Experiment one is listed to run.
+                    GoOn=1;
+                    RunExp =1;
+                else
+                    warning('Condition does not exist, Please try again') %tell user the value they entered is not a known condition.
+                    TaskToRun(2)=0; %list as not running experiment if condition value does not exist.
 
+                end
             end
-        end
-    otherwise
-        conditionTask2 = []; % condition left empty as experiment was listed as not to be run.
-        TasksToRun(2) = 0; % experiment listed as not to be run
+        case (~contains(runTask2, 'Y','IgnoreCase', true) && contains(runTask2, 'N','IgnoreCase', true)) %Changed 'strcmp' to 'contains' to make more versatile. looks for a y anywhere in input
+            conditionTask2 = []; % maybe should make task fail with empty condition? <- I've done something above, is this what you meant? TB
+            TasksToRun(2) = 0;
+            RunExp =1;
+
+    end
 end
 
 % Same but for Experiment 3
 GoOn=0;
-runTask3 = input('Run Experiment 3? Y/N -->'   , 's');
-switch true
-    case contains(runTask3, 'Y','IgnoreCase', true) %Changed 'strcmp' to 'contains' to make more versatile. looks for a y anywhere in input
-        while GoOn==0
-            conditionTask3 = input('Which condition for Experiment 3? [1,2,3] ---> ');
+RunExp=0;
+while RunExp==0
+    runTask3 = input('Run Experiment 3? Y/N -->'   , 's');
+    switch true
+        case contains(runTask3, 'Y','IgnoreCase', true) && ~contains(runTask3, 'N','IgnoreCase', true) %Changed 'strcmp' to 'contains' to make more versatile. looks for a y anywhere in input
+            while GoOn==0
+                conditionTask3 = input('Which condition for Experiment 3? [1,2,3] ---> ');
 
-            if ismember(conditionTask3,Exp3Con) %Check that input is actually a condition value
-                TasksToRun(3) = 1;% if condition exists, Experiment one is listed to run.
-                GoOn=1;
-            else
-                warning('Condition does not exist, Please try again') %tell user the value they entered is not a known condition.
-                TaskToRun(3)=0; %list as not running experiment if condition value does not exist.
+                if ismember(conditionTask3,Exp3Con) %Check that input is actually a condition value
+                    TasksToRun(3) = 1;% if condition exists, Experiment one is listed to run.
+                    GoOn=1;
+                    RunExp =1;
+                else
+                    warning('Condition does not exist, Please try again') %tell user the value they entered is not a known condition.
+                    TaskToRun(3)=0; %list as not running experiment if condition value does not exist.
+                end
             end
-        end
-    otherwise
-        conditionTask3 = []; % condition left empty as experiment was listed as not to be run.
-        TasksToRun(3) = 0; % experiment listed as not to be run.
-end
+        case (~contains(runTask3, 'Y','IgnoreCase', true) && contains(runTask3, 'N','IgnoreCase', true)) %Changed 'strcmp' to 'contains' to make more versatile. looks for a y anywhere in input
+            conditionTask3 = []; % maybe should make task fail with empty condition? <- I've done something above, is this what you meant? TB
+            TasksToRun(3) = 0;
+            RunExp =1;
 
+    end
+end
 
 
 % declare what condition was selected in output files.
@@ -184,7 +201,8 @@ pause(2)
 PsychDefaultSetup(2);
 Screen ('Preference', 'SkipSyncTests', 2);% change this to 0 when actually running experiments
 Screen ('Preference', 'DefaultFontSize');% change this to 0 when actually running experiments
-
+Pointer =0;
+QNumbers=1;
 ScreenNumber = max(Screen('Screens')); % Selects the screen to display. Sole display = 0.
 [Env.MainWindow, Env.windowRect] = Screen ('OpenWindow', ScreenNumber,Env.Colours.LightGrey,[],[],[],[],[],4);%Open a window using psychimaging and colour it light grey
 [Env.OffScreenWindow]= Screen('OpenOffscreenWindow',Env.MainWindow,Env.Colours.Alpha);
@@ -201,6 +219,7 @@ Env.ScreenInfo.pixelpermm= Env.ScreenInfo.diagonalmmcount\Env.ScreenInfo.diagona
 Env.ScreenInfo.pixelpercm= Env.ScreenInfo.diagonalcmcount\Env.ScreenInfo.diagonalpixelcount;% pixel per mm calculation for ET calibration and visual angle calcs
 Env.ScreenInfo.dotpitch=Env.ScreenInfo.diagonalcmcount/Env.ScreenInfo.diagonalpixelcount*10; %dot pitch calculations.
 DATA.FlipInterval = Screen('GetFlipInterval', Env.MainWindow);% Query the frame duration
+DATA.WaitFrameInput =1;
 Maxpriority = Priority(2);%set priority to max.
 Priority(Maxpriority);
 [~,~, Env.MouseInfo]= GetMouseIndices; % Get mouse info for Experiment Confidence Slider response
@@ -245,7 +264,7 @@ Triggers.Training.StartTrial = 141;
 Triggers.Training.FriendTrial = 142;
 Triggers.Training.FoeTrial = 143;
 Triggers.Training.NeitherTrial = 144;
-Triggers.Training.Response = 145; 
+Triggers.Training.Response = 145;
 Triggers.Training.TimeOut = 146;
 Triggers.Training.EndTrial = 147;
 % Test
@@ -282,8 +301,8 @@ end
 
 
 if TasksToRun(1) == 1
-%CreateJar(Env.Loc_Stimuli,Env.MainWindow,)
-      ExperimentOne(Env.Expt1_Condition);
+    %CreateJar(Env.Loc_Stimuli,Env.MainWindow,)
+    ExperimentOne(Env.Expt1_Condition);
     %     % do calibrations as needed, show instructions as needed
 
     DataFromExpt = DATA.ExperimentOne;%ExperimentOne(Env);
@@ -296,17 +315,17 @@ if TasksToRun(2) == 1
 
     % do calibrations as needed, show instructions as needed
 
-    DataFromExpt = Experiment2(Env);
+    DataFromExpt =DATA.ExperimentTwo;
     % also have the option for updating DATA global directly within
     % function, if needed
     DATA.E2_raw = DataFromExpt;
 end
 
 if TasksToRun(3) == 1
-ExperimentThree(Env.Expt3_Condition);
+    ExperimentThree(Env.Expt3_Condition);
     % do calibrations as needed, show instructions as needed
 
-    DataFromExpt = Experiment3(Env);
+    DataFromExpt = DATA.ExperimentThree;
     % also have the option for updating DATA global directly within
     % function, if needed
     DATA.E3_raw = DataFromExpt;
@@ -318,6 +337,6 @@ end
 
 
 %% wrap up and clean up.
-% sca;
+sca;
 % clear all;
 

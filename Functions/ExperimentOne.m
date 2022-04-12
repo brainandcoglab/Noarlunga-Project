@@ -1,9 +1,8 @@
 %Written by Tess Barich 2021.
 function ExperimentOne(ConditionSequence) % Bead Jar Task
 %   Declare Globals
-
-global DATA Env Calib Jar Bead BeadSize
-%% Declare condition values
+global DATA Env Calib Jar Bead BeadSize QNumbers
+%% The Adjustables - The Goblet for One
 QuestionQuote1 = "Would you like to make a decision on which jar beads are being drawn from?";
 QuestionQuote2 = "Which jar have you decided beads are being drawn from?";
 
@@ -32,11 +31,11 @@ WaitFrames =1;
 
 
 [TextXPos,TextYPos] =DrawFormattedText(Env.OffScreenWindow,sprintf('%s',QuestionQuote1),'center',Env.ScreenInfo.Centre(2)+150);
-[ResponseBoxCoords]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,2,[AnswerYesQuote;AnswerNoQuote],ResponseBoxandTextColour,3,[Env.ScreenInfo.Centre(1)-60;Env.ScreenInfo.Centre(1)+60],[TextYPos+60],100,100,1,16);
+[ResponseBoxCoords]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,2,[AnswerYesQuote;AnswerNoQuote],ResponseBoxandTextColour,3,[Env.ScreenInfo.Centre(1)-60;Env.ScreenInfo.Centre(1)+60],[TextYPos+60],100,100,QNumbers,16);
 
 
 [TextXPos,TextYPos] =DrawFormattedText(Env.OffScreenWindow,sprintf('%s',QuestionQuote2),'center',Env.ScreenInfo.Centre(2)+150);
-[ResponseBoxCoords]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,2,["JarA";"JarB"],ResponseBoxandTextColour,3,[Env.ScreenInfo.Centre(1)-60;Env.ScreenInfo.Centre(1)+60],[TextYPos+60],100,100,2,16);
+[ResponseBoxCoords]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,2,["JarA";"JarB"],ResponseBoxandTextColour,3,[Env.ScreenInfo.Centre(1)-60;Env.ScreenInfo.Centre(1)+60],[TextYPos+60],100,100,QNumbers,16);
 
 %% Build the sequences
 if DATA.useET ==1;
@@ -301,7 +300,7 @@ for blocks = 1: nBlocks
 
                 end
 
-                ScreenFlipTime = FlipTime+(WaitFrames-0.5)*DATA.FlipInterval;
+                ScreenFlipTime = FlipTime+(DATA.WaitFrameInput-0.5)*DATA.FlipInterval;
                 FlipTime=  Screen('Flip',Env.MainWindow,ScreenFlipTime);
                 %BIOSEMI HERE
                 DATA.ExperimentOne(blocks).EyeData(FrameIndex).FrameIndex =FrameIndex;
