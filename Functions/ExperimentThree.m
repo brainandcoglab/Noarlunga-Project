@@ -1,7 +1,7 @@
 %% Created by Tess Barich (2022) Flinders Uni.
 % DRM Experiment with Eyetracking and EEG.
 function ExperimentThree(ConditionSequence)
-global DATA Env Calib  QNumbers
+global DATA Env Calib  
 %% The Adjustables - The Sea of Three
 fileDirectory = Env.Loc_Stimuli;
 searchString = '.xlsx';
@@ -15,15 +15,17 @@ LowAnchor ='Complete Guess';
 HighAnchor ='Definitely Old/New';
 [Env.ExperimentThree.Raw.EncodingLists,Env.ExperimentThree.EncodingWords,Env.ExperimentThree.Raw.RecognitionLists,...
     Env.ExperimentThree.RecognitionWords,Env.ExperimentThree.Raw.LureLists,Env.ExperimentThree.SmoothLureLists]=ImportandSortMyLists(fileDirectory,searchString);
+CorrectAnswerIdx =contains(Env.ExperimentThree.RecognitionWords,Env.ExperimentThree.EncodingWords,'IgnoreCase',true);
+
 [Env.FixCrossTexture] = BuildMeACross(Env.MainWindow,Env.OffScreenWindow,widthX,widthY,Env.Colours.Black);
 [TextXPos,TextYPos] =DrawFormattedText(Env.OffScreenWindow,sprintf('%s',QuestionQuote1),'center',Env.ScreenInfo.Centre(2)+150);
-[ResponseBoxCoords]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,2,["Old";"New"],ResponseBoxandTextColour,3,[Env.ScreenInfo.Centre(1)-60;Env.ScreenInfo.Centre(1)+60],[TextYPos+60],100,100,QNumbers,16);
+[ResponseBoxCoords,Env.ExperimentThree.ResponseOne,Env.ExperimentThree.ResponseTwo]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,2,["Old";"New"],ResponseBoxandTextColour,3,[Env.ScreenInfo.Centre(1)-60;Env.ScreenInfo.Centre(1)+60],[TextYPos+60],100,100,1,16);
 nEncodingWords = height(Env.ExperimentThree.EncodingWords);
 nRecognitionWords =height(Env.ExperimentThree.RecognitionWords);
 EncodingInstructions = 'You are about to be shown a list of words.\nPlease remember them as well as you can';
 RecognitionInstructions = ['You are about to be shown another list of words. '...
     'Please indicate whether you have seen this word before in the previous list by selecting old word' ...
-    ',or if you have not seen this word in the previous list select new word. '...
+    ', or if you have not seen this word in the previous list select new word. '...
     'For each selection, please give a confidence rating on the scale, ranging from 50% (complete guess) to 100% (definitely old/new).'];
 BreakQuote ='Have a Break, have a kitkat';
 WordPresentationTime =1.7;
@@ -102,6 +104,15 @@ switch phases
 
                 DATA.ExperimentThree(phases).Phase(blocks).Blocks(RecognitionPhase).JitterAlphabet=randi([750,1250],1);
                 JitterinSecs= DATA.ExperimentThree(phases).Phase(blocks).Blocks(RecognitionPhase).JitterAlphabet/1000;
+                switch CorrectAnswerIdx(RecognitionPhase,blocks)
+                    case 0
+                        DATA.ExperimentThree(phases).Phase(blocks).Blocks(RecognitionPhase).CorrectAnswerStr = "New";
+                        DATA.ExperimentThree(phases).Phase(blocks).Blocks(RecognitionPhase).CorrectAnswer = 2;
+
+                    case 1
+                        DATA.ExperimentThree(phases).Phase(blocks).Blocks(RecognitionPhase).CorrectAnswerStr = "Old";
+                        DATA.ExperimentThree(phases).Phase(blocks).Blocks(RecognitionPhase).CorrectAnswer = 1;
+                end
                 nFixFrames = ceil(JitterinSecs/DATA.FlipInterval);
                 for fixpresentation = 1:nFixFrames
                     Screen('DrawTextures',Env.MainWindow,12);
@@ -154,7 +165,7 @@ switch phases
 
                             end
                         otherwise
-                            Screen('DrawTextures',Env.MainWindow,[Env.ResponseOne(Response);Env.ResponseTwo(Response)],[],[ResponseBoxCoords]',[],[],[],[ResponseHighlighter1;ResponseHighlighter2]');
+                            Screen('DrawTextures',Env.MainWindow,[Env.ExperimentThree.ResponseOne(Response);Env.ExperimentThree.ResponseTwo(Response)],[],[ResponseBoxCoords]',[],[],[],[ResponseHighlighter1;ResponseHighlighter2]');
                     end
 
                     Screen('TextSize', Env.MainWindow, 50); %  need to reset pen size after.
@@ -168,7 +179,14 @@ switch phases
 
                         case (Response ==1 && any(keyIsDown==1) && ismembertol(x,ResponseBoxCoords(1,1):ResponseBoxCoords(1,3))&& ismembertol(y,ResponseBoxCoords(1,2):ResponseBoxCoords(1,4)) &&LodgeAResponse==0);
                             DATA.ExperimentThree(blocks).EyeData(FrameIndex).Trigger = 114; % Response Given 14 - 1 represents experiment number and 4 represents Response of A in each block
-                            DATA.ExperimentThree(phases).Phase(blocks).Blocks(RecognitionPhase).WordAnswer="Old";
+                            DATA.ExperimentThree(phases).Phase(blocks).Blocks(RecognitionPhase).ResponseWordStr="Old";
+                             switch DATA.ExperimentThree(phases).Phase(blocks).Blocks(RecognitionPhase).CorrectAnswer
+                                case 1
+
+                                    DATA.ExperimentThree(phases).Phase(blocks).Blocks(RecognitionPhase).ResponseAnswer=1;
+                                case 2
+                                    DATA.ExperimentThree(phases).Phase(blocks).Blocks(RecognitionPhase).ResponseAnswer=0;
+                            end
                             DATA.ExperimentThree(phases).Phase(blocks).Blocks(RecognitionPhase).OldNewRT=GetSecs-start;
                             OldNewResponseSystemTime=GetSecs;
                             LodgeAResponse =1;
@@ -176,7 +194,14 @@ switch phases
 
                         case (Response ==1 && any(keyIsDown==1) && ismembertol(x,ResponseBoxCoords(2,1):ResponseBoxCoords(2,3))&& ismembertol(y,ResponseBoxCoords(2,2):ResponseBoxCoords(2,4)) &&  LodgeAResponse==0);
                             DATA.ExperimentThree(blocks).EyeData(FrameIndex).Trigger = 115; % Response Given 15 - 1 represents experiment number and 5 represents Response of B for each trial in each block
-                            DATA.ExperimentThree(phases).Phase(blocks).Blocks(RecognitionPhase).WordAnswer="New";
+                            DATA.ExperimentThree(phases).Phase(blocks).Blocks(RecognitionPhase).ResponseWordStr="New";
+                            switch DATA.ExperimentThree(phases).Phase(blocks).Blocks(RecognitionPhase).CorrectAnswer
+                                case 1
+
+                                    DATA.ExperimentThree(phases).Phase(blocks).Blocks(RecognitionPhase).ResponseAnswer=0;
+                                case 2
+                                    DATA.ExperimentThree(phases).Phase(blocks).Blocks(RecognitionPhase).ResponseAnswer=1;
+                            end
                             DATA.ExperimentThree(phases).Phase(blocks).Blocks(RecognitionPhase).OldNewRT=GetSecs-start;
                             OldNewResponseSystemTime=GetSecs;
                             Response =2;

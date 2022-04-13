@@ -13,7 +13,7 @@ AssertOpenGL;
 while KbCheck; end
 
 % structures to pass general information between sub-experiments.
-global DATA Env Calib Pointer  QNumbers
+global DATA Env Calib Pointer  
 
 % automatically switch pwd to location of current file, even if user
 % declared otherwise (accidentally). (Lots of calls to pwd below.)
@@ -202,7 +202,6 @@ PsychDefaultSetup(2);
 Screen ('Preference', 'SkipSyncTests', 2);% change this to 0 when actually running experiments
 Screen ('Preference', 'DefaultFontSize');% change this to 0 when actually running experiments
 Pointer =0;
-QNumbers=1;
 ScreenNumber = max(Screen('Screens')); % Selects the screen to display. Sole display = 0.
 [Env.MainWindow, Env.windowRect] = Screen ('OpenWindow', ScreenNumber,Env.Colours.LightGrey,[],[],[],[],[],4);%Open a window using psychimaging and colour it light grey
 [Env.OffScreenWindow]= Screen('OpenOffscreenWindow',Env.MainWindow,Env.Colours.Alpha);
@@ -301,7 +300,6 @@ end
 
 
 if TasksToRun(1) == 1
-    %CreateJar(Env.Loc_Stimuli,Env.MainWindow,)
     ExperimentOne(Env.Expt1_Condition);
     %     % do calibrations as needed, show instructions as needed
 
@@ -314,6 +312,7 @@ end
 if TasksToRun(2) == 1
 
     % do calibrations as needed, show instructions as needed
+    ExperimentTwo(Env.Expt2_Condition);
 
     DataFromExpt =DATA.ExperimentTwo;
     % also have the option for updating DATA global directly within

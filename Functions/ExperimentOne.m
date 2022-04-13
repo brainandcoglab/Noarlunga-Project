@@ -6,9 +6,11 @@ global DATA Env Calib Jar Bead BeadSize QNumbers
 QuestionQuote1 = "Would you like to make a decision on which jar beads are being drawn from?";
 QuestionQuote2 = "Which jar have you decided beads are being drawn from?";
 
-AnswerYesQuote ="Yes,I have made a decision";
-AnswerNoQuote = "No,I would like to see another\nbead";
-ConfidenceQuote = "On a scale of 0-100, How confident are you in this decision?";
+AnswerYesQuote ="Yes\n(Make a decision)";
+AnswerNoQuote = "No\n(See next bead)";
+ConfidenceQuote = "On a scale of 50-100, How confident are you in this decision?";
+LowAnchor ='Complete Guess';
+HighAnchor ='I am sure\nI am right';
 nTrials =4;
 nBeadstoPresent =10;
 TotalBeadsInJar = 1000; % can set to whatever you want.
@@ -26,16 +28,17 @@ intertrialinterval =0.5;
 ResponseBoxandTextColour = Env.Colours.White;
 LineLength =400; %pixels
 WaitFrames =1;
+                    Screen('TextSize', Env.MainWindow, 20); %  need to reset pen size after.
 
 
 
 
 [TextXPos,TextYPos] =DrawFormattedText(Env.OffScreenWindow,sprintf('%s',QuestionQuote1),'center',Env.ScreenInfo.Centre(2)+150);
-[ResponseBoxCoords]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,2,[AnswerYesQuote;AnswerNoQuote],ResponseBoxandTextColour,3,[Env.ScreenInfo.Centre(1)-60;Env.ScreenInfo.Centre(1)+60],[TextYPos+60],100,100,QNumbers,16);
+[ResponseBoxCoords,Env.ExperimentOne.ResponseOne(1),Env.ExperimentOne.ResponseTwo(1)]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,2,[AnswerYesQuote;AnswerNoQuote],ResponseBoxandTextColour,3,[Env.ScreenInfo.Centre(1)-60;Env.ScreenInfo.Centre(1)+60],[TextYPos+60],100,100,1,16);
 
 
 [TextXPos,TextYPos] =DrawFormattedText(Env.OffScreenWindow,sprintf('%s',QuestionQuote2),'center',Env.ScreenInfo.Centre(2)+150);
-[ResponseBoxCoords]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,2,["JarA";"JarB"],ResponseBoxandTextColour,3,[Env.ScreenInfo.Centre(1)-60;Env.ScreenInfo.Centre(1)+60],[TextYPos+60],100,100,QNumbers,16);
+[ResponseBoxCoords,Env.ExperimentOne.ResponseOne(2),Env.ExperimentOne.ResponseTwo(2)]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,2,["JarA";"JarB"],ResponseBoxandTextColour,3,[Env.ScreenInfo.Centre(1)-60;Env.ScreenInfo.Centre(1)+60],[TextYPos+60],100,100,2,16);
 
 %% Build the sequences
 if DATA.useET ==1;
@@ -185,7 +188,7 @@ for blocks = 1: nBlocks
                         ResponseHighlighter2 = Env.Colours.Red;
 
                 end
-                Screen('DrawTextures',Env.MainWindow,[Env.JarOne;Env.JarTwo],[],[CentreJarOne;CentreJarTwo]');
+                Screen('DrawTextures',Env.MainWindow,[Env.JarTexture1;Env.JarTexture2],[],[CentreJarOne;CentreJarTwo]');
 
                 DrawFormattedText(Env.MainWindow,sprintf('85 percent %s\n15 percent %s',JarAStr,JarBStr),CentreJarOne(1)+20,CentreJarOne(4)+20);
                 DrawFormattedText(Env.MainWindow,sprintf('85 percent %s\n15 percent %s',JarBStr,JarAStr),CentreJarTwo(1)+20,CentreJarTwo(4)+20);
@@ -193,16 +196,19 @@ for blocks = 1: nBlocks
 
                 switch true
                     case Response ==3
-                        Screen('FillRect',Env.MainWindow,Env.Colours.White,[Env.ScreenInfo.Centre(1)-(LineLength/2),Env.ScreenInfo.Centre(2)+120,Env.ScreenInfo.Centre(1)+(LineLength/2),Env.ScreenInfo.Centre(2)+125]);
-                        TotalLengthLine = LineLength;
-                        LineDetails = [(Env.ScreenInfo.Centre(1)-(LineLength/2)),Env.ScreenInfo.Centre(2)+120,(Env.ScreenInfo.Centre(1)+(LineLength/2)),Env.ScreenInfo.Centre(2)+125];
-                        if ismembertol(x,LineDetails(1):LineDetails(3))&& ismembertol(y,LineDetails(2)-10:LineDetails(4)+10)
-                            Difference = LineDetails(3)-x;
-                            NumberToDisplay = ceil((TotalLengthLine-Difference)/4);
-                            DrawFormattedText(Env.MainWindow,sprintf('%i',NumberToDisplay),'center',Env.ScreenInfo.Centre(2)+150);
-                        end
+                       Screen('FillRect',Env.MainWindow,Env.Colours.White,[Env.ScreenInfo.Centre(1)-(LineLength/2),Env.ScreenInfo.Centre(2)+120,Env.ScreenInfo.Centre(1)+(LineLength/2),Env.ScreenInfo.Centre(2)+125]);
+                            TotalLengthLine = LineLength;
+                            LineDetails = [(Env.ScreenInfo.Centre(1)-(LineLength/2)),Env.ScreenInfo.Centre(2)+120,(Env.ScreenInfo.Centre(1)+(LineLength/2)),Env.ScreenInfo.Centre(2)+125];
+                            DrawFormattedText(Env.MainWindow,sprintf('%s',LowAnchor),LineDetails(1)-200,Env.ScreenInfo.Centre(2)+125);
+                            DrawFormattedText(Env.MainWindow,sprintf('%s',HighAnchor),LineDetails(3)+50,Env.ScreenInfo.Centre(2)+125);
+                            if ismembertol(x,LineDetails(1):LineDetails(3))&& ismembertol(y,LineDetails(2)-20:LineDetails(4)+20)
+                                Difference = (LineDetails(3) -x)/2;
+                                NumberToDisplay = ceil((TotalLengthLine-Difference)/4);
+                                DrawFormattedText(Env.MainWindow,sprintf('%i',NumberToDisplay),'center',Env.ScreenInfo.Centre(2)+150);
+
+                            end
                     otherwise
-                        Screen('DrawTextures',Env.MainWindow,[Env.ResponseOne(Response);Env.ResponseTwo(Response)],[],[ResponseBoxCoords]',[],[],[],[ResponseHighlighter1;ResponseHighlighter2]');
+                        Screen('DrawTextures',Env.MainWindow,[Env.ExperimentOne.ResponseOne(Response);Env.ExperimentOne.ResponseTwo(Response)],[],[ResponseBoxCoords]',[],[],[],[ResponseHighlighter1;ResponseHighlighter2]');
 
                 end
 
@@ -238,7 +244,7 @@ for blocks = 1: nBlocks
                             BreakMeOut = 0;
                             LodgeAResponse =1;
                             Response = 2;
-                            DATA.ExperimentOne(blocks).Block(Trials).NumBeadstoDecision = DATA.ExperimentOne(blocks).Block(Trials).NumBeadstoDecision;
+                            DATA.ExperimentOne(blocks).Block(Trials).NumBeadstoDecision = DATA.ExperimentOne(blocks).Block(Trials).NumBeadstoDecision+1;
 
                         end
 
