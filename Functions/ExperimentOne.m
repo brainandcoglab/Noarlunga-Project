@@ -272,9 +272,9 @@ for blocks = 1: nBlocks
                 ResponseHighlighter2 = Env.Colours.Black;
 
 
-                if BreakMeOut ==1
-                    break
-                end
+%                 if BreakMeOut ==1
+%                     break
+%                 end
 
                 switch DATA.useET
                     case 0
@@ -306,6 +306,9 @@ for blocks = 1: nBlocks
 
                 end
 
+                if BreakMeOut ==1
+                    break
+                end
                 ScreenFlipTime = FlipTime+(DATA.WaitFrameInput-0.5)*DATA.FlipInterval;
                 FlipTime=  Screen('Flip',Env.MainWindow,ScreenFlipTime);
                 %BIOSEMI HERE

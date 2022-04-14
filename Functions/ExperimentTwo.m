@@ -11,6 +11,7 @@ BlankX=300;
 BlankY =100;
 nBlocks =4;
 nTrials =4;
+nMaxAttempts =25;
 QuestionQuote = "Which colour is occuring more frequently?";
 ConfidenceQuote = "On a scale of 50-100, How confident are you in this decision?";
 LowAnchor ='Complete Guess';
@@ -25,7 +26,8 @@ distractorseqtwo=SequenceOrder(3);
 distractorseqthree =SequenceOrder(4);
 Sequence =[{},{},{},{}];
 intertrialinterval =0.5;
-ResponseBoxandTextColour = Env.Colours.White;
+BoxColour =Env.Colours.Grey;
+ResponseBoxandTextColour = Env.Colours.Black;
 LineLength =400; %pixels
 WaitFrames =1;
 
@@ -103,7 +105,6 @@ for blocks = 1: nBlocks
             ColourBoxAStr = "Red";
             ColourBoxB = Env.Colours.Green;
             ColourBoxBStr = "Green";
-
     end
 
     DATA.ExperimentTwo(blocks).TargetSequenceStr =Sequence(:,SequenceOrder(2));
@@ -118,19 +119,43 @@ for blocks = 1: nBlocks
     DATA.ExperimentTwo(blocks).TargetSequence = Sequence(:,SequenceOrder(2));
 
     [ResponseBoxCoords,Env.ExperimentTwo.ResponseOne,Env.ExperimentTwo.ResponseTwo]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,2,[AnswerQuote1;AnswerQuote2],ResponseBoxandTextColour,3,[Env.ExperimentTwo.MinMaxXY(1,1);Env.ExperimentTwo.MinMaxXY(3,1)],Env.ExperimentTwo.MinMaxXY(4,1)+120,200,100,1,16,[ColourBoxA;ColourBoxB]');
-
     Response=1;
+    for Trials =1:nTrials
+        LodgeAResponse =0;
+        colour = zeros([width(BoxColour),width(Env.ExperimentTwo.Coordinates)]);
+        for colourfill =1:width(BoxColour)
+            colour(colourfill,:)= BoxColour(colourfill)';
+        end
+        for Attempts =1:nMaxAttempts
+            BreakMeOut=0;
+            KbQueueCreate(Env.MouseInfo{1,1}.index,[],2);
+            KbQueueStart(Env.MouseInfo{1,1}.index);
+            CurrentSample =[];
+            start =GetSecs;
+            while LodgeAResponse <2
+                [keyIsDown,timekeyisdown,KeyisReleased,~,~]= KbQueueCheck(Env.MouseInfo{1,1}.index);
+                [x,y,buttons] = GetMouse(Env.MainWindow);
+                Screen('DrawTextures',Env.MainWindow,[Env.ExperimentTwo.ResponseOne(Response);Env.ExperimentTwo.ResponseTwo(Response)],[],[ResponseBoxCoords]',[],[],[],[]);
+                Screen('FillRect',Env.MainWindow,colour,Env.ExperimentTwo.Coordinates);
+                Screen('DrawingFinished',Env.MainWindow);
+                CoordinatesIdx = (keyIsDown==1 & x>= Env.ExperimentTwo.Coordinates(1,:) & x<= Env.ExperimentTwo.Coordinates(3,:) & y>= Env.ExperimentTwo.Coordinates(2,:) & y<= Env.ExperimentTwo.Coordinates(4,:));
+                switch true
+                    case any(CoordinatesIdx==1)
+                        colour(:,CoordinatesIdx)=cell2mat(Sequence(Attempts,Trials))';
+                        if Attempts<25
+                            BreakMeOut=1;
+                        else
+                            BreakMeOut=0;
+                        end
+                end
+                        if BreakMeOut ==1
+                            break
+                        end
+                
+                Screen('Flip',Env.MainWindow);
 
-
-
-
-
-    Screen('DrawTextures',Env.MainWindow,[Env.ExperimentTwo.ResponseOne(Response);Env.ExperimentTwo.ResponseTwo(Response)],[],[ResponseBoxCoords]',[],[],[],[]);
-
-
-    Screen('FillRect',Env.MainWindow,[],Env.ExperimentTwo.Coordinates);
-    Screen('Flip',Env.MainWindow);
-    KbWait([],2);
-    sca;
-
+            end
+        end
+    end
+end
 end
