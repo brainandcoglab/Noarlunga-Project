@@ -13,13 +13,13 @@ AssertOpenGL;
 while KbCheck; end
 
 % structures to pass general information between sub-experiments.
-global DATA Env Calib Pointer  
+global DATA Env Calib Pointer  colour
 
 % automatically switch pwd to location of current file, even if user
 % declared otherwise (accidentally). (Lots of calls to pwd below.)
 [pathstr,name,ext]  = fileparts(mfilename('fullpath'));
 cd(pathstr);
-
+colour =[]
 
 %% Capture demographic data
 inputError = 1;

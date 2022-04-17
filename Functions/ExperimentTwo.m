@@ -1,6 +1,6 @@
 %Written by Tess Barich 2022
 function ExperimentTwo(ConditionSequence)
-global Env DATA  Calib
+global Env DATA  Calib colour
 %% The Adjustables - Paired Fates
 NumOfX =5;
 NumOfY=5;
@@ -28,7 +28,7 @@ Sequence =[{},{},{},{}];
 intertrialinterval =0.5;
 BoxColour =Env.Colours.Grey;
 ResponseBoxandTextColour = Env.Colours.Black;
-LineLength =400; %pixels
+LineLength =600; %pixels
 WaitFrames =1;
 
 
@@ -110,6 +110,8 @@ for blocks = 1: nBlocks
     DATA.ExperimentTwo(blocks).TargetSequenceStr =Sequence(:,SequenceOrder(2));
     AnswerQuote1 = ColourBoxAStr;
     AnswerQuote2 = ColourBoxBStr;
+    TranslateCorrectColour(TranslateCorrectColourBoxAAnswerIdx(:,blocks),blocks) = AnswerQuote1;
+    TranslateCorrectColour(TranslateCorrectColourBoxBAnswerIdx(:,blocks),blocks) =AnswerQuote2;
 
     Change2Colour =strcmp(Sequence,{'A'});
     Sequence(Change2Colour)={ColourBoxA};
@@ -119,15 +121,26 @@ for blocks = 1: nBlocks
     DATA.ExperimentTwo(blocks).TargetSequence = Sequence(:,SequenceOrder(2));
 
     [ResponseBoxCoords,Env.ExperimentTwo.ResponseOne,Env.ExperimentTwo.ResponseTwo]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,2,[AnswerQuote1;AnswerQuote2],ResponseBoxandTextColour,3,[Env.ExperimentTwo.MinMaxXY(1,1);Env.ExperimentTwo.MinMaxXY(3,1)],Env.ExperimentTwo.MinMaxXY(4,1)+120,200,100,1,16,[ColourBoxA;ColourBoxB]');
-    Response=1;
+    FrameIndex =1;
+    Env.ResponseBoxCoords =ResponseBoxCoords;
     for Trials =1:nTrials
+        DATA.ExperimentTwo(blocks).Block(Trials).CorrectResponseColour = TranslateCorrectColour(Trials,blocks);
+        DATA.ExperimentTwo(blocks).Block(Trials).CorrectResponseBox = TranslateCorrectBoxAnswer(Trials,blocks);
+        DATA.ExperimentTwo(blocks).Block(Trials).TrialSequence =Sequence(:,Trials);
+        DATA.ExperimentTwo(blocks).Block(Trials).NumBoxtoDecision = 0;
+        Response=1;
         LodgeAResponse =0;
         colour = zeros([width(BoxColour),width(Env.ExperimentTwo.Coordinates)]);
         for colourfill =1:width(BoxColour)
             colour(colourfill,:)= BoxColour(colourfill)';
         end
+        FlipTime=Screen('Flip',Env.MainWindow,[]);
+        WaitSecs(intertrialinterval);
         for Attempts =1:nMaxAttempts
             BreakMeOut=0;
+            ResponseHighlighter1 =Env.Colours.White;
+
+            ResponseHighlighter2 = Env.Colours.White;
             KbQueueCreate(Env.MouseInfo{1,1}.index,[],2);
             KbQueueStart(Env.MouseInfo{1,1}.index);
             CurrentSample =[];
@@ -135,24 +148,150 @@ for blocks = 1: nBlocks
             while LodgeAResponse <2
                 [keyIsDown,timekeyisdown,KeyisReleased,~,~]= KbQueueCheck(Env.MouseInfo{1,1}.index);
                 [x,y,buttons] = GetMouse(Env.MainWindow);
-                Screen('DrawTextures',Env.MainWindow,[Env.ExperimentTwo.ResponseOne(Response);Env.ExperimentTwo.ResponseTwo(Response)],[],[ResponseBoxCoords]',[],[],[],[]);
-                Screen('FillRect',Env.MainWindow,colour,Env.ExperimentTwo.Coordinates);
-                Screen('DrawingFinished',Env.MainWindow);
+
+                switch Response
+                    case 1
+                        DrawFormattedText(Env.MainWindow,sprintf('%s',QuestionQuote),'center',100);
+
+                    case 2
+                        DrawFormattedText(Env.MainWindow,sprintf('%s',ConfidenceQuote),'center',100);
+
+                end
+
+                switch true
+                    case (ismembertol(x,ResponseBoxCoords(1,1):ResponseBoxCoords(1,3))&& ismembertol(y,ResponseBoxCoords(1,2):ResponseBoxCoords(1,4)))
+                        ResponseHighlighter1 = Env.Colours.Grey;
+
+                    case (ismembertol(x,ResponseBoxCoords(2,1):ResponseBoxCoords(2,3))&& ismembertol(y,ResponseBoxCoords(2,2):ResponseBoxCoords(2,4)))
+                        ResponseHighlighter2 = Env.Colours.Grey;
+
+
+                end
+                Env.HighlightIdx = ( x>= Env.ExperimentTwo.Coordinates(1,:) & x<= Env.ExperimentTwo.Coordinates(3,:) & y>= Env.ExperimentTwo.Coordinates(2,:) & y<= Env.ExperimentTwo.Coordinates(4,:));
+                Env.colour = colour;
+                switch true
+
+                    case (any(Env.HighlightIdx==1) & colour(1,Env.HighlightIdx)==BoxColour(1))
+                        colour(:,Env.HighlightIdx)=Env.Colours.DarkGrey';
+                end
+
+
                 CoordinatesIdx = (keyIsDown==1 & x>= Env.ExperimentTwo.Coordinates(1,:) & x<= Env.ExperimentTwo.Coordinates(3,:) & y>= Env.ExperimentTwo.Coordinates(2,:) & y<= Env.ExperimentTwo.Coordinates(4,:));
+
                 switch true
                     case any(CoordinatesIdx==1)
                         colour(:,CoordinatesIdx)=cell2mat(Sequence(Attempts,Trials))';
-                        if Attempts<25
-                            BreakMeOut=1;
+                        if DATA.ExperimentTwo(blocks).Block(Trials).NumBoxtoDecision <25
+                            BreakMeOut = 1;
+                            LodgeAResponse =0;
+                            DATA.ExperimentTwo(blocks).Block(Trials).NumBoxtoDecision = DATA.ExperimentTwo(blocks).Block(Trials).NumBoxtoDecision+1;
                         else
-                            BreakMeOut=0;
+                            BreakMeOut = 0;
+                            LodgeAResponse =0;
+                            DATA.ExperimentTwo(blocks).Block(Trials).NumBoxtoDecision = DATA.ExperimentTwo(blocks).Block(Trials).NumBoxtoDecision+1;
                         end
+                    case (any(keyIsDown==1) && ismembertol(x,ResponseBoxCoords(1,1):ResponseBoxCoords(1,3))&& ismembertol(y,ResponseBoxCoords(1,2):ResponseBoxCoords(1,4))&& Response ==1 &&LodgeAResponse==0);
+                        DATA.ExperimentTwo(blocks).EyeData(FrameIndex).Trigger = 114; % Response Given 14 - 1 represents experiment number and 4 represents Response of A in each block
+                        DATA.ExperimentTwo(blocks).Block(Trials).BoxResponseAnswer="ColourA";
+                        DATA.ExperimentTwo(blocks).Block(Trials).BoxResponseColour=AnswerQuote1;
+                        DATA.ExperimentTwo(blocks).Block(Trials).ResponseRT=GetSecs-start;
+                        ResponseSystemTime=GetSecs;
+                        LodgeAResponse =1;
+                        Response =2;
+                    case (any(keyIsDown==1) && ismembertol(x,ResponseBoxCoords(2,1):ResponseBoxCoords(2,3))&& ismembertol(y,ResponseBoxCoords(2,2):ResponseBoxCoords(2,4)) && Response ==1 && LodgeAResponse==0);
+                        DATA.ExperimentTwo(blocks).EyeData(FrameIndex).Trigger = 115; % Response Given 15 - 1 represents experiment number and 5 represents Response of B for each trial in each block
+                        DATA.ExperimentTwo(blocks).Block(Trials).BoxResponseAnswer = "ColourB";
+                        DATA.ExperimentTwo(blocks).Block(Trials).BoxResponseColour=AnswerQuote2;
+                        DATA.ExperimentTwo(blocks).Block(Trials).ResponseRT=GetSecs-start;
+                        ResponseSystemTime=GetSecs;
+                        LodgeAResponse =1;
+                        Response =2;
+                    case (Response ==2 && any(keyIsDown==1) && ismembertol(x,LineDetails(1)-10:LineDetails(3))&& ismembertol(y,LineDetails(2)-10:LineDetails(4)+10)&& LodgeAResponse==1)
+                        DATA.ExperimentTwo(blocks).Block(Trials).Confidence = NumberToDisplay;
+                        DATA.ExperimentTwo(blocks).Block(Trials).ConfidenceRT = GetSecs-ResponseSystemTime;
+
+                        DATA.ExperimentTwo(blocks).EyeData(FrameIndex).Trigger = 116; % Response Given 16 - 1 represents experiment number and 6 represents confidence Response for each trial in each block
+
+                        LodgeAResponse =2;
+                    otherwise
+
                 end
-                        if BreakMeOut ==1
-                            break
+
+                switch true
+                    case Response ==2
+                        Screen('FillRect',Env.MainWindow,Env.Colours.White,[Env.ScreenInfo.Centre(1)-(LineLength/2),Env.ScreenInfo.Centre(2)+120,Env.ScreenInfo.Centre(1)+(LineLength/2),Env.ScreenInfo.Centre(2)+125]);
+                        TotalLengthLine = LineLength;
+                        LineDetails = [(Env.ScreenInfo.Centre(1)-(LineLength/2)),Env.ScreenInfo.Centre(2)+120,(Env.ScreenInfo.Centre(1)+(LineLength/2)),Env.ScreenInfo.Centre(2)+125];
+                        DrawFormattedText(Env.MainWindow,sprintf('%s',LowAnchor),LineDetails(1)-200,Env.ScreenInfo.Centre(2)+125);
+                        DrawFormattedText(Env.MainWindow,sprintf('%s',HighAnchor),LineDetails(3)+50,Env.ScreenInfo.Centre(2)+125);
+                        if ismembertol(x,LineDetails(1)-10:LineDetails(3))&& ismembertol(y,LineDetails(2)-20:LineDetails(4)+20)
+                            Difference = (LineDetails(3) -x)/2;
+                            NumberToDisplay = ceil((TotalLengthLine-Difference)/6);
+                            DrawFormattedText(Env.MainWindow,sprintf('%i',NumberToDisplay),'center',Env.ScreenInfo.Centre(2)+150);
                         end
-                
-                Screen('Flip',Env.MainWindow);
+                    otherwise
+                        Screen('DrawTextures',Env.MainWindow,[Env.ExperimentTwo.ResponseOne(Response);Env.ExperimentTwo.ResponseTwo(Response)],[],[ResponseBoxCoords]',[],[],[],[ResponseHighlighter1;ResponseHighlighter2]');
+
+
+                end
+
+                Screen('FillRect',Env.MainWindow,colour,Env.ExperimentTwo.Coordinates);
+                Screen('DrawingFinished',Env.MainWindow);
+
+                changeidx = (ismember(colour(:,1:end),Env.Colours.DarkGrey));
+                logicchangeidxtest=any(changeidx==1);
+
+                switch true
+                    case (any(logicchangeidxtest==1))
+                        colour(:,logicchangeidxtest)=[Env.Colours.Grey'];
+                end
+
+                ResponseHighlighter1 =Env.Colours.White;
+
+                ResponseHighlighter2 = Env.Colours.White;
+
+                switch DATA.useET
+                    case 0
+                        DATA.ExperimentTwo(blocks).EyeData(FrameIndex).SystemTime = GetSecs;
+                        DATA.ExperimentTwo(blocks).EyeData(FrameIndex).OnsetTime =  DATA.ExperimentTwo(blocks).EyeData(FrameIndex).SystemTime  -start;
+
+                    case 1
+                        switch true
+                            case isempty(CurrentSample)==1
+
+                                DATA.ExperimentTwo(blocks).EyeData(FrameIndex).TobiiLeftEyePos = FirstPassET(1,end).LeftEye.GazePoint.OnDisplayArea;
+                                DATA.ExperimentTwo(blocks).EyeData(FrameIndex).TobiiRightEyePos = FirstPassET(1,end).RightEye.GazePoint.OnDisplayArea;
+                                DATA.ExperimentTwo(blocks).EyeData(FrameIndex).TobiiLeftEyePupil = FirstPassET(1,end).LeftEye.Pupil.Diameter;
+                                DATA.ExperimentTwo(blocks).EyeData(FrameIndex).TobiiRightEyePupil = FirstPassET(1,end).LeftEye.Pupil.Diameter;
+                                DATA.ExperimentTwo(blocks).EyeData(FrameIndex).TobiiTime = FirstPassET(1,end).SystemTimeStamp;
+
+
+                            case isempty(CurrentSample)==0
+
+                                DATA.ExperimentTwo(blocks).EyeData(FrameIndex).TobiiLeftEyePos= CurrentSample(1,end).LeftEye.GazePoint.OnDisplayArea;
+                                DATA.ExperimentTwo(blocks).EyeData(FrameIndex).TobiiRightEyePos  = CurrentSample(1,end).RightEye.GazePoint.OnDisplayArea;
+                                DATA.ExperimentTwo(blocks).EyeData(FrameIndex).TobiiLeftEyePupil = CurrentSample(1,end).LeftEye.Pupil.Diameter;
+                                DATA.ExperimentTwo(blocks).EyeData(FrameIndex).TobiiRightEyePupil = CurrentSample(1,end).LeftEye.Pupil.Diameter;
+                                DATA.ExperimentTwo(blocks).EyeData(FrameIndex).TobiiTime = CurrentSample(1,end).SystemTimeStamp;
+                        end
+                        CurrentSample = my_eyetracker.get_gaze_data();
+
+                end
+
+                if BreakMeOut ==1
+                    break
+                end
+                ScreenFlipTime = FlipTime+(DATA.WaitFrameInput-0.5)*DATA.FlipInterval;
+                FlipTime=  Screen('Flip',Env.MainWindow,ScreenFlipTime);
+                %BIOSEMI HERE
+                DATA.ExperimentTwo(blocks).EyeData(FrameIndex).FrameIndex =FrameIndex;
+                DATA.ExperimentTwo(blocks).EyeData(FrameIndex).FlipTimeStamp=FlipTime;
+                FrameIndex=FrameIndex+1;
+
+                if BreakMeOut ==1
+                    break
+                end
+
 
             end
         end
