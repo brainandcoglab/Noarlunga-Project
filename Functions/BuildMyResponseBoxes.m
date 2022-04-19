@@ -1,5 +1,5 @@
 %Created by Tess Barich 2022 - Flinders University
-function [ResponseBoxCoords,ResponseOne,ResponseTwo]= BuildMyResponseBoxes(window,window2,NumResponses,ResponseOptions,ResponseTextColour,FrameWidth,Xpos,Ypos,sizeX,sizeY,QNums,textsize,fillcolour)
+function [ResponseBoxCoords,ResponseOne,ResponseTwo]= BuildMyResponseBoxes(window,window2,NumResponses,ResponseOptions,ResponseTextColour,FrameWidth,Xpos,Ypos,sizeX,sizeY,textwrap,textsize,fillcolour)
 global Env  
 Screen('TextSize',window2,textsize);
 for Building = 1:NumResponses
@@ -8,7 +8,7 @@ for Building = 1:NumResponses
         case exist('fillcolour','var')==1
             Screen('FillRect',window2,fillcolour(:,Building),[ResponseBoxCoords(Building,:)]');
     end
-    DrawFormattedText(window2,sprintf('%s',ResponseOptions(Building,:)),'center','center',ResponseTextColour,12,[],[],[],[],[ResponseBoxCoords(Building,:)]);
+    DrawFormattedText(window2,sprintf('%s',ResponseOptions(Building,:)),'center','center',ResponseTextColour,textwrap,[],[],[],[],[ResponseBoxCoords(Building,:)]);
 end
 ResponseBoxCoords=ResponseBoxCoords';
 
@@ -28,6 +28,8 @@ ResponseTwo=Screen('MakeTexture',window,ResponseBoxTwo,[]);
         ResponseBoxOne=Screen('GetImage',window2,[ResponseBoxCoords(saving,:)],[],[],4);
 ResponseOne(saving)=Screen('MakeTexture',window,ResponseBoxOne,[]);
         end
+        ResponseBoxCoords=ResponseBoxCoords';
+
         ResponseTwo =[];
 end
 

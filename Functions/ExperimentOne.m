@@ -53,7 +53,7 @@ PracticeAnswer2 =[sprintf("They would all be %s beads",PracticeColourAStr);sprin
 
 Screen('TextSize', Env.MainWindow, 20); %  need to reset pen size after.
 
-[DATA.ExperimentOne.AttentionScore]=Exp1AttentionCheck(Env.Loc_Stimuli,Env.MainWindow,Env.OffScreenWindow, PracticeColourA,PracticeColourB,MainColourNumberBeads,SecondaryColourNumberBeads,'EXP1',PracticeQ1,PracticeQ2,PracticeAnswer1,PracticeAnswer2,PracticeIntructions,ResponseBoxandTextColour);
+[DATA.ExperimentOne.AttentionScore]=Exp1AttentionCheck(Env.Loc_Stimuli,Env.MainWindow,Env.OffScreenWindow, PracticeColourA,PracticeColourAStr,PracticeColourB,PracticeColourBStr,MainColourNumberBeads,SecondaryColourNumberBeads,'EXP1',PracticeQ1,PracticeQ2,PracticeAnswer1,PracticeAnswer2,PracticeIntructions,ResponseBoxandTextColour);
 
 
 %    TranslateCorrectJarAAnswerIdx= zeros([nTrials,nBlocks]);
@@ -63,11 +63,11 @@ Screen('TextSize', Env.MainWindow, 20); %  need to reset pen size after.
 
 
 [TextXPos,TextYPos] =DrawFormattedText(Env.OffScreenWindow,sprintf('%s',QuestionQuote1),'center',Env.ScreenInfo.Centre(2)+150);
-[ResponseBoxCoords,Env.ExperimentOne.ResponseOne(1),Env.ExperimentOne.ResponseTwo(1)]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,2,[AnswerYesQuote;AnswerNoQuote],ResponseBoxandTextColour,3,[Env.ScreenInfo.Centre(1)-60;Env.ScreenInfo.Centre(1)+60],[TextYPos+60;TextYPos+60],100,100,1,16);
+[ResponseBoxCoords,Env.ExperimentOne.ResponseOne(1),Env.ExperimentOne.ResponseTwo(1)]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,2,[AnswerYesQuote;AnswerNoQuote],ResponseBoxandTextColour,3,[Env.ScreenInfo.Centre(1)-60;Env.ScreenInfo.Centre(1)+60],[TextYPos+60;TextYPos+60],100,100,12,16);
 
 
 [TextXPos,TextYPos] =DrawFormattedText(Env.OffScreenWindow,sprintf('%s',QuestionQuote2),'center',Env.ScreenInfo.Centre(2)+150);
-[ResponseBoxCoords,Env.ExperimentOne.ResponseOne(2),Env.ExperimentOne.ResponseTwo(2)]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,2,["JarA";"JarB"],ResponseBoxandTextColour,3,[Env.ScreenInfo.Centre(1)-60;Env.ScreenInfo.Centre(1)+60],[TextYPos+60;TextYPos+60],100,100,2,16);
+[ResponseBoxCoords,Env.ExperimentOne.ResponseOne(2),Env.ExperimentOne.ResponseTwo(2)]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,2,["JarA";"JarB"],ResponseBoxandTextColour,3,[Env.ScreenInfo.Centre(1)-60;Env.ScreenInfo.Centre(1)+60],[TextYPos+60;TextYPos+60],100,100,12,16);
 
 %% Build the sequences
 if DATA.useET ==1;

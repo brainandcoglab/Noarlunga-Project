@@ -20,7 +20,7 @@ CorrectAnswerIdx =contains(Env.ExperimentThree.RecognitionWords,Env.ExperimentTh
 
 [Env.FixCrossTexture] = BuildMeACross(Env.MainWindow,Env.OffScreenWindow,widthX,widthY,Env.Colours.Black);
 [TextXPos,TextYPos] =DrawFormattedText(Env.OffScreenWindow,sprintf('%s',QuestionQuote1),'center',Env.ScreenInfo.Centre(2)+150);
-[ResponseBoxCoords,Env.ExperimentThree.ResponseOne,Env.ExperimentThree.ResponseTwo]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,2,["Old";"New"],ResponseBoxandTextColour,3,[Env.ScreenInfo.Centre(1)-60;Env.ScreenInfo.Centre(1)+60],[TextYPos+60;TextYPos+60],100,100,1,16);
+[ResponseBoxCoords,Env.ExperimentThree.ResponseOne,Env.ExperimentThree.ResponseTwo]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,2,["Old";"New"],ResponseBoxandTextColour,3,[Env.ScreenInfo.Centre(1)-60;Env.ScreenInfo.Centre(1)+60],[TextYPos+60;TextYPos+60],100,100,12,16);
 nEncodingWords = height(Env.ExperimentThree.EncodingWords);
 nRecognitionWords =height(Env.ExperimentThree.RecognitionWords);
 EncodingInstructions = 'You are about to be shown a list of words.\nPlease remember them as well as you can';

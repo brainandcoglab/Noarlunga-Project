@@ -122,7 +122,7 @@ for blocks = 1: nBlocks
 
     DATA.ExperimentTwo(blocks).TargetSequence = Sequence(:,SequenceOrder(2));
 
-    [ResponseBoxCoords,Env.ExperimentTwo.ResponseOne,Env.ExperimentTwo.ResponseTwo]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,2,[AnswerQuote1;AnswerQuote2],ResponseBoxandTextColour,3,[Env.ExperimentTwo.MinMaxXY(1,1);Env.ExperimentTwo.MinMaxXY(3,1)],[Env.ExperimentTwo.MinMaxXY(4,1)+120;Env.ExperimentTwo.MinMaxXY(4,1)+120],200,100,1,16,[ColourBoxA;ColourBoxB]');
+    [ResponseBoxCoords,Env.ExperimentTwo.ResponseOne,Env.ExperimentTwo.ResponseTwo]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,2,[AnswerQuote1;AnswerQuote2],ResponseBoxandTextColour,3,[Env.ExperimentTwo.MinMaxXY(1,1);Env.ExperimentTwo.MinMaxXY(3,1)],[Env.ExperimentTwo.MinMaxXY(4,1)+120;Env.ExperimentTwo.MinMaxXY(4,1)+120],200,100,12,16,[ColourBoxA;ColourBoxB]');
     FrameIndex =1;
     Env.ResponseBoxCoords =ResponseBoxCoords;
     for Trials =1:nTrials
