@@ -7,7 +7,8 @@ fileDirectory = Env.Loc_Stimuli;
 searchString = '.xlsx';
 widthX =30;
 widthY =4;
-LineLength =400;
+LineLength =600; %pixels
+LineDivide =LineLength/100;
 ResponseBoxandTextColour = Env.Colours.White;
 QuestionQuote1 = 'Is this word an old word, or a new word?';
 QuestionQuote2 = 'How confident are you that you have or have not seen this word before?';
@@ -19,7 +20,7 @@ CorrectAnswerIdx =contains(Env.ExperimentThree.RecognitionWords,Env.ExperimentTh
 
 [Env.FixCrossTexture] = BuildMeACross(Env.MainWindow,Env.OffScreenWindow,widthX,widthY,Env.Colours.Black);
 [TextXPos,TextYPos] =DrawFormattedText(Env.OffScreenWindow,sprintf('%s',QuestionQuote1),'center',Env.ScreenInfo.Centre(2)+150);
-[ResponseBoxCoords,Env.ExperimentThree.ResponseOne,Env.ExperimentThree.ResponseTwo]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,2,["Old";"New"],ResponseBoxandTextColour,3,[Env.ScreenInfo.Centre(1)-60;Env.ScreenInfo.Centre(1)+60],[TextYPos+60],100,100,1,16);
+[ResponseBoxCoords,Env.ExperimentThree.ResponseOne,Env.ExperimentThree.ResponseTwo]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,2,["Old";"New"],ResponseBoxandTextColour,3,[Env.ScreenInfo.Centre(1)-60;Env.ScreenInfo.Centre(1)+60],[TextYPos+60;TextYPos+60],100,100,1,16);
 nEncodingWords = height(Env.ExperimentThree.EncodingWords);
 nRecognitionWords =height(Env.ExperimentThree.RecognitionWords);
 EncodingInstructions = 'You are about to be shown a list of words.\nPlease remember them as well as you can';
@@ -158,9 +159,9 @@ switch phases
                             LineDetails = [(Env.ScreenInfo.Centre(1)-(LineLength/2)),Env.ScreenInfo.Centre(2)+120,(Env.ScreenInfo.Centre(1)+(LineLength/2)),Env.ScreenInfo.Centre(2)+125];
                             DrawFormattedText(Env.MainWindow,sprintf('%s',LowAnchor),LineDetails(1)-200,Env.ScreenInfo.Centre(2)+125);
                             DrawFormattedText(Env.MainWindow,sprintf('%s',HighAnchor),LineDetails(3)+50,Env.ScreenInfo.Centre(2)+125);
-                            if ismembertol(x,LineDetails(1):LineDetails(3))&& ismembertol(y,LineDetails(2)-10:LineDetails(4)+10)
+                            if ismembertol(x,LineDetails(1)-10:LineDetails(3))&& ismembertol(y,LineDetails(2)-20:LineDetails(4)+20)
                                 Difference = (LineDetails(3) -x)/2;
-                                NumberToDisplay = ceil((TotalLengthLine-Difference)/4);
+                                NumberToDisplay = ceil((TotalLengthLine-Difference)/LineDivide);
                                 DrawFormattedText(Env.MainWindow,sprintf('%i',NumberToDisplay),'center',Env.ScreenInfo.Centre(2)+150);
 
                             end
@@ -207,7 +208,7 @@ switch phases
                             Response =2;
                             LodgeAResponse =1;
 
-                        case (Response ==2 && any(keyIsDown==1) && ismembertol(x,LineDetails(1):LineDetails(3))&& ismembertol(y,LineDetails(2)-10:LineDetails(4)+10)&& LodgeAResponse==1)
+                        case (Response ==2 && any(keyIsDown==1) && ismembertol(x,LineDetails(1)-10:LineDetails(3))&& ismembertol(y,LineDetails(2)-20:LineDetails(4)+20)&& LodgeAResponse==1)
                             DATA.ExperimentThree(phases).Phase(blocks).Blocks(RecognitionPhase).Confidence = NumberToDisplay;
                             DATA.ExperimentThree(phases).Phase(blocks).Blocks(RecognitionPhase).ConfidenceRT = GetSecs-OldNewResponseSystemTime;
                             DATA.ExperimentThree(blocks).EyeData(FrameIndex).Trigger = 116; % Response Given 16 - 1 represents experiment number and 6 represents confidence Response for each trial in each block

@@ -11,7 +11,7 @@ BlankX=300;
 BlankY =100;
 nBlocks =4;
 nTrials =4;
-nMaxAttempts =25;
+nMaxAttempts =26;
 QuestionQuote = "Which colour is occuring more frequently?";
 ConfidenceQuote = "On a scale of 50-100, How confident are you in this decision?";
 LowAnchor ='Complete Guess';
@@ -27,8 +27,10 @@ distractorseqthree =SequenceOrder(4);
 Sequence =[{},{},{},{}];
 intertrialinterval =0.5;
 BoxColour =Env.Colours.Grey;
+BoxHighlight =Env.Colours.DarkGrey;
 ResponseBoxandTextColour = Env.Colours.Black;
 LineLength =600; %pixels
+LineDivide =LineLength/100; %pixels
 WaitFrames =1;
 
 
@@ -120,7 +122,7 @@ for blocks = 1: nBlocks
 
     DATA.ExperimentTwo(blocks).TargetSequence = Sequence(:,SequenceOrder(2));
 
-    [ResponseBoxCoords,Env.ExperimentTwo.ResponseOne,Env.ExperimentTwo.ResponseTwo]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,2,[AnswerQuote1;AnswerQuote2],ResponseBoxandTextColour,3,[Env.ExperimentTwo.MinMaxXY(1,1);Env.ExperimentTwo.MinMaxXY(3,1)],Env.ExperimentTwo.MinMaxXY(4,1)+120,200,100,1,16,[ColourBoxA;ColourBoxB]');
+    [ResponseBoxCoords,Env.ExperimentTwo.ResponseOne,Env.ExperimentTwo.ResponseTwo]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,2,[AnswerQuote1;AnswerQuote2],ResponseBoxandTextColour,3,[Env.ExperimentTwo.MinMaxXY(1,1);Env.ExperimentTwo.MinMaxXY(3,1)],[Env.ExperimentTwo.MinMaxXY(4,1)+120;Env.ExperimentTwo.MinMaxXY(4,1)+120],200,100,1,16,[ColourBoxA;ColourBoxB]');
     FrameIndex =1;
     Env.ResponseBoxCoords =ResponseBoxCoords;
     for Trials =1:nTrials
@@ -136,6 +138,8 @@ for blocks = 1: nBlocks
         end
         FlipTime=Screen('Flip',Env.MainWindow,[]);
         WaitSecs(intertrialinterval);
+                    start =GetSecs;
+
         for Attempts =1:nMaxAttempts
             BreakMeOut=0;
             ResponseHighlighter1 =Env.Colours.White;
@@ -144,7 +148,7 @@ for blocks = 1: nBlocks
             KbQueueCreate(Env.MouseInfo{1,1}.index,[],2);
             KbQueueStart(Env.MouseInfo{1,1}.index);
             CurrentSample =[];
-            start =GetSecs;
+            %start =GetSecs;
             while LodgeAResponse <2
                 [keyIsDown,timekeyisdown,KeyisReleased,~,~]= KbQueueCheck(Env.MouseInfo{1,1}.index);
                 [x,y,buttons] = GetMouse(Env.MainWindow);
@@ -160,19 +164,19 @@ for blocks = 1: nBlocks
 
                 switch true
                     case (ismembertol(x,ResponseBoxCoords(1,1):ResponseBoxCoords(1,3))&& ismembertol(y,ResponseBoxCoords(1,2):ResponseBoxCoords(1,4)))
-                        ResponseHighlighter1 = Env.Colours.Grey;
+                        ResponseHighlighter1 = BoxColour;
 
                     case (ismembertol(x,ResponseBoxCoords(2,1):ResponseBoxCoords(2,3))&& ismembertol(y,ResponseBoxCoords(2,2):ResponseBoxCoords(2,4)))
-                        ResponseHighlighter2 = Env.Colours.Grey;
+                        ResponseHighlighter2 = BoxColour;
 
 
                 end
                 Env.HighlightIdx = ( x>= Env.ExperimentTwo.Coordinates(1,:) & x<= Env.ExperimentTwo.Coordinates(3,:) & y>= Env.ExperimentTwo.Coordinates(2,:) & y<= Env.ExperimentTwo.Coordinates(4,:));
-                Env.colour = colour;
+                checkcolour = (ismember(colour(:,1:end),BoxColour) & Env.HighlightIdx==1);
+                logictest =any(checkcolour==1);
                 switch true
-
-                    case (any(Env.HighlightIdx==1) & colour(1,Env.HighlightIdx)==BoxColour(1))
-                        colour(:,Env.HighlightIdx)=Env.Colours.DarkGrey';
+                    case       (any(logictest==1))
+                        colour(:,logictest)=[BoxHighlight'];
                 end
 
 
@@ -180,15 +184,16 @@ for blocks = 1: nBlocks
 
                 switch true
                     case any(CoordinatesIdx==1)
-                        colour(:,CoordinatesIdx)=cell2mat(Sequence(Attempts,Trials))';
+
                         if DATA.ExperimentTwo(blocks).Block(Trials).NumBoxtoDecision <25
+                            colour(:,CoordinatesIdx)=cell2mat(Sequence(Attempts,Trials))';
                             BreakMeOut = 1;
                             LodgeAResponse =0;
                             DATA.ExperimentTwo(blocks).Block(Trials).NumBoxtoDecision = DATA.ExperimentTwo(blocks).Block(Trials).NumBoxtoDecision+1;
                         else
                             BreakMeOut = 0;
                             LodgeAResponse =0;
-                            DATA.ExperimentTwo(blocks).Block(Trials).NumBoxtoDecision = DATA.ExperimentTwo(blocks).Block(Trials).NumBoxtoDecision+1;
+                            DATA.ExperimentTwo(blocks).Block(Trials).NumBoxtoDecision = nMaxAttempts;%DATA.ExperimentTwo(blocks).Block(Trials).NumBoxtoDecision+1;
                         end
                     case (any(keyIsDown==1) && ismembertol(x,ResponseBoxCoords(1,1):ResponseBoxCoords(1,3))&& ismembertol(y,ResponseBoxCoords(1,2):ResponseBoxCoords(1,4))&& Response ==1 &&LodgeAResponse==0);
                         DATA.ExperimentTwo(blocks).EyeData(FrameIndex).Trigger = 114; % Response Given 14 - 1 represents experiment number and 4 represents Response of A in each block
@@ -206,7 +211,7 @@ for blocks = 1: nBlocks
                         ResponseSystemTime=GetSecs;
                         LodgeAResponse =1;
                         Response =2;
-                    case (Response ==2 && any(keyIsDown==1) && ismembertol(x,LineDetails(1)-10:LineDetails(3))&& ismembertol(y,LineDetails(2)-10:LineDetails(4)+10)&& LodgeAResponse==1)
+                    case (Response ==2 && any(keyIsDown==1) && ismembertol(x,LineDetails(1)-10:LineDetails(3))&& ismembertol(y,LineDetails(2)-20:LineDetails(4)+20)&& LodgeAResponse==1)
                         DATA.ExperimentTwo(blocks).Block(Trials).Confidence = NumberToDisplay;
                         DATA.ExperimentTwo(blocks).Block(Trials).ConfidenceRT = GetSecs-ResponseSystemTime;
 
@@ -226,7 +231,7 @@ for blocks = 1: nBlocks
                         DrawFormattedText(Env.MainWindow,sprintf('%s',HighAnchor),LineDetails(3)+50,Env.ScreenInfo.Centre(2)+125);
                         if ismembertol(x,LineDetails(1)-10:LineDetails(3))&& ismembertol(y,LineDetails(2)-20:LineDetails(4)+20)
                             Difference = (LineDetails(3) -x)/2;
-                            NumberToDisplay = ceil((TotalLengthLine-Difference)/6);
+                            NumberToDisplay = ceil((TotalLengthLine-Difference)/LineDivide);
                             DrawFormattedText(Env.MainWindow,sprintf('%i',NumberToDisplay),'center',Env.ScreenInfo.Centre(2)+150);
                         end
                     otherwise
@@ -238,12 +243,12 @@ for blocks = 1: nBlocks
                 Screen('FillRect',Env.MainWindow,colour,Env.ExperimentTwo.Coordinates);
                 Screen('DrawingFinished',Env.MainWindow);
 
-                changeidx = (ismember(colour(:,1:end),Env.Colours.DarkGrey));
+                changeidx = (ismember(colour(:,1:end),BoxHighlight));
                 logicchangeidxtest=any(changeidx==1);
 
                 switch true
                     case (any(logicchangeidxtest==1))
-                        colour(:,logicchangeidxtest)=[Env.Colours.Grey'];
+                        colour(:,logicchangeidxtest)=[BoxColour'];
                 end
 
                 ResponseHighlighter1 =Env.Colours.White;

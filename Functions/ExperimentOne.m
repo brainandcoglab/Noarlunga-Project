@@ -1,7 +1,7 @@
 %Written by Tess Barich 2021.
 function ExperimentOne(ConditionSequence) % Bead Jar Task
 %   Declare Globals
-global DATA Env Calib Jar Bead BeadSize QNumbers
+global DATA Env Calib Jar Bead BeadSize 
 %% The Adjustables - The Goblet for One
 QuestionQuote1 = "Would you like to make a decision on which jar beads are being drawn from?";
 QuestionQuote2 = "Which jar have you decided beads are being drawn from?";
@@ -26,19 +26,48 @@ distractorseqthree =SequenceOrder(4);
 Sequence =[{},{},{},{}];
 intertrialinterval =0.5;
 ResponseBoxandTextColour = Env.Colours.White;
-LineLength =400; %pixels
+LineLength =600; %pixels
+LineDivide =LineLength/100;
 WaitFrames =1;
-                    Screen('TextSize', Env.MainWindow, 20); %  need to reset pen size after.
+
+PracticeColourA = Env.Colours.Purple;
+PracticeColourAStr ="purple";
+PracticeColourB =Env.Colours.Magenta;
+PracticeColourBStr ="magenta";
+PracticeIntructions = [sprintf("In this game you will be shown two jars full of %i coloured beads similar to those above.\nOne jar will contain 85%% beads in one colour (in this case %s), and 15%% beads in another colour (in this case %s).\nThe other jar will contain coloured beads in the opposite ratio" + ...
+    "\nFor each game, one of the jars will be randomly selected, but you will not be told which one.\nThe computer will randomly draw beads from the selected jar.\nYour task is to decide which jar the beads are being drawn from.\nYou can continue requesting beads until you feel confident about making a decision.\nJars will not swap mid-game.\nPlease answer the following simple questions to demonstrate you understood the instructions.",...
+TotalBeadsInJar,PracticeColourAStr,PracticeColourBStr)]; 
 
 
+
+PracticeQ1 = "Will the jars ever swap during a game?";
+PracticeQ2 ="If a large number of beads were drawn from Jar A above (for example), what might you expect?";
+PracticeAnswer1 =["Yes";"No"];
+PracticeAnswer2 =[sprintf("They would all be %s beads",PracticeColourAStr);sprintf("They would all be %s beads",PracticeColourBStr);sprintf("They would probably be a random mix of approx 50%% %s and 50%% %s beads",PracticeColourAStr,PracticeColourBStr);...
+    sprintf("They would probably be a random mix of approx 85%% %s and 15%% %s beads",PracticeColourAStr,PracticeColourBStr);sprintf("They would probably be a random mix of approx 15%% %s and 85%% %s beads",PracticeColourAStr,PracticeColourBStr)];
+
+   TranslateCorrectJarAAnswerIdx= zeros([nTrials,nBlocks],'logical');
+         TranslateCorrectJarBAnswerIdx = zeros([nTrials,nBlocks],'logical');
+        TranslateCorrectJarAnswer = zeros([nTrials,nBlocks]);
+        JarAnswer=zeros([nTrials,nBlocks]);
+
+Screen('TextSize', Env.MainWindow, 20); %  need to reset pen size after.
+
+[DATA.ExperimentOne.AttentionScore]=Exp1AttentionCheck(Env.Loc_Stimuli,Env.MainWindow,Env.OffScreenWindow, PracticeColourA,PracticeColourB,MainColourNumberBeads,SecondaryColourNumberBeads,'EXP1',PracticeQ1,PracticeQ2,PracticeAnswer1,PracticeAnswer2,PracticeIntructions,ResponseBoxandTextColour);
+
+
+%    TranslateCorrectJarAAnswerIdx= zeros([nTrials,nBlocks]);
+%         TranslateCorrectJarBAnswerIdx = zeros([nTrials,nBlocks]);
+%         TranslateCorrectJarAnswer = zeros([nTrials,nBlocks]);
+%         JarAnswer=zeros([nTrials,nBlocks]);
 
 
 [TextXPos,TextYPos] =DrawFormattedText(Env.OffScreenWindow,sprintf('%s',QuestionQuote1),'center',Env.ScreenInfo.Centre(2)+150);
-[ResponseBoxCoords,Env.ExperimentOne.ResponseOne(1),Env.ExperimentOne.ResponseTwo(1)]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,2,[AnswerYesQuote;AnswerNoQuote],ResponseBoxandTextColour,3,[Env.ScreenInfo.Centre(1)-60;Env.ScreenInfo.Centre(1)+60],[TextYPos+60],100,100,1,16);
+[ResponseBoxCoords,Env.ExperimentOne.ResponseOne(1),Env.ExperimentOne.ResponseTwo(1)]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,2,[AnswerYesQuote;AnswerNoQuote],ResponseBoxandTextColour,3,[Env.ScreenInfo.Centre(1)-60;Env.ScreenInfo.Centre(1)+60],[TextYPos+60;TextYPos+60],100,100,1,16);
 
 
 [TextXPos,TextYPos] =DrawFormattedText(Env.OffScreenWindow,sprintf('%s',QuestionQuote2),'center',Env.ScreenInfo.Centre(2)+150);
-[ResponseBoxCoords,Env.ExperimentOne.ResponseOne(2),Env.ExperimentOne.ResponseTwo(2)]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,2,["JarA";"JarB"],ResponseBoxandTextColour,3,[Env.ScreenInfo.Centre(1)-60;Env.ScreenInfo.Centre(1)+60],[TextYPos+60],100,100,2,16);
+[ResponseBoxCoords,Env.ExperimentOne.ResponseOne(2),Env.ExperimentOne.ResponseTwo(2)]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,2,["JarA";"JarB"],ResponseBoxandTextColour,3,[Env.ScreenInfo.Centre(1)-60;Env.ScreenInfo.Centre(1)+60],[TextYPos+60;TextYPos+60],100,100,2,16);
 
 %% Build the sequences
 if DATA.useET ==1;
@@ -84,10 +113,13 @@ for blocks = 1: nBlocks
                 end
 
         end
-        TranslateCorrectJarAAnswerIdx(SequenceBuilding,blocks) = JarAnswer(SequenceBuilding,blocks)==1; %1 = Jar A is the answer
+        
+        TranslateCorrectJarAAnswerIdx(SequenceBuilding,blocks) = JarAnswer(SequenceBuilding,blocks)==1 ;%1 = Jar A is the answer
         TranslateCorrectJarBAnswerIdx(SequenceBuilding,blocks) = JarAnswer(SequenceBuilding,blocks)==2; %2 = Jar B is the answer
-        TranslateCorrectJarAnswer(TranslateCorrectJarAAnswerIdx(:,blocks),blocks) = "Jar A";
-        TranslateCorrectJarAnswer(TranslateCorrectJarBAnswerIdx(:,blocks),blocks) ="Jar B";
+       TranslateCorrectJarAnswer(TranslateCorrectJarAAnswerIdx(:,blocks),blocks) = "Jar A";
+         TranslateCorrectJarAnswer(TranslateCorrectJarBAnswerIdx(:,blocks),blocks) ="Jar B";
+      
+ 
     end
     switch  ConditionSequence(blocks)
         case 1
@@ -130,6 +162,7 @@ for blocks = 1: nBlocks
 
     CentreJarOne=my_centreTexture(Env.Stimuli(Jar).Size(1)/2,Env.Stimuli(Jar).Size(2)/2,Env.ScreenInfo.width*0.4,Env.ScreenInfo.Centre(2)/2);
     CentreJarTwo = my_centreTexture(Env.Stimuli(Jar).Size(1)/2,Env.Stimuli(Jar).Size(2)/2,Env.ScreenInfo.width*0.6,Env.ScreenInfo.Centre(2)/2);
+
     BeadTexture = repmat({Env.Stimuli(Bead).TexturePointer},height(Sequence),1);
     FrameIndex =1;
     if DATA.useET==1
@@ -143,14 +176,18 @@ for blocks = 1: nBlocks
         DATA.ExperimentOne(blocks).Block(Trials).CorrectResponse = JarAnswer(Trials,blocks);
         DATA.ExperimentOne(blocks).Block(Trials).TrialSequence =Sequence(:,Trials);
         DATA.ExperimentOne(blocks).Block(Trials).NumBeadstoDecision = 1;
-        FlipTime=Screen('Flip',Env.MainWindow,[]);
-        WaitSecs(intertrialinterval);
+                
+    WaitSecs(intertrialinterval);
+        [FlipTime,~,EndFlip]=Screen('Flip',Env.MainWindow,[]);
+    
         for Attempts =1:nBeadstoPresent
             LodgeAResponse =0;
             Response = 1;
             BreakMeOut =0;
             DispStim(Attempts,1) = BeadTexture(Attempts,1);
+        
             DispStim(Attempts,2)= cell({my_centreTexture(BeadSize(1),BeadSize(2),(Env.ScreenInfo.width*Attempts/17+250),Env.ScreenInfo.Centre(2)+50)});
+        
             DispStim(Attempts,3)= Sequence(Attempts,Trials);
             textures = cell2mat(DispStim(:,1));
             textures = transpose(textures);
@@ -166,9 +203,9 @@ for blocks = 1: nBlocks
             start =GetSecs;
             while LodgeAResponse <3
 
-                [keyIsDown,timekeyisdown,KeyisReleased,~,~]= KbQueueCheck(Env.MouseInfo{1,1}.index);
+                [keyIsDown]= KbQueueCheck(Env.MouseInfo{1,1}.index);
 
-                [x,y,buttons] = GetMouse(Env.MainWindow);
+                [x,y] = GetMouse(Env.MainWindow);
 
                 switch Response
                     case 1
@@ -190,23 +227,23 @@ for blocks = 1: nBlocks
                 end
                 Screen('DrawTextures',Env.MainWindow,[Env.JarTexture1;Env.JarTexture2],[],[CentreJarOne;CentreJarTwo]');
 
-                DrawFormattedText(Env.MainWindow,sprintf('85 percent %s\n15 percent %s',JarAStr,JarBStr),CentreJarOne(1)+20,CentreJarOne(4)+20);
-                DrawFormattedText(Env.MainWindow,sprintf('85 percent %s\n15 percent %s',JarBStr,JarAStr),CentreJarTwo(1)+20,CentreJarTwo(4)+20);
+                DrawFormattedText(Env.MainWindow,sprintf('85%% %s\n15%% %s',JarAStr,JarBStr),CentreJarOne(1)+20,CentreJarOne(4)+20);
+                DrawFormattedText(Env.MainWindow,sprintf('85%% %s\n15%% %s',JarBStr,JarAStr),CentreJarTwo(1)+20,CentreJarTwo(4)+20);
                 Screen('DrawTextures',Env.MainWindow,textures,[],coordinates,[],[],[],colourmask);
 
                 switch true
                     case Response ==3
-                       Screen('FillRect',Env.MainWindow,Env.Colours.White,[Env.ScreenInfo.Centre(1)-(LineLength/2),Env.ScreenInfo.Centre(2)+120,Env.ScreenInfo.Centre(1)+(LineLength/2),Env.ScreenInfo.Centre(2)+125]);
-                            TotalLengthLine = LineLength;
-                            LineDetails = [(Env.ScreenInfo.Centre(1)-(LineLength/2)),Env.ScreenInfo.Centre(2)+120,(Env.ScreenInfo.Centre(1)+(LineLength/2)),Env.ScreenInfo.Centre(2)+125];
-                            DrawFormattedText(Env.MainWindow,sprintf('%s',LowAnchor),LineDetails(1)-200,Env.ScreenInfo.Centre(2)+125);
-                            DrawFormattedText(Env.MainWindow,sprintf('%s',HighAnchor),LineDetails(3)+50,Env.ScreenInfo.Centre(2)+125);
-                            if ismembertol(x,LineDetails(1):LineDetails(3))&& ismembertol(y,LineDetails(2)-20:LineDetails(4)+20)
-                                Difference = (LineDetails(3) -x)/2;
-                                NumberToDisplay = ceil((TotalLengthLine-Difference)/4);
-                                DrawFormattedText(Env.MainWindow,sprintf('%i',NumberToDisplay),'center',Env.ScreenInfo.Centre(2)+150);
+                        Screen('FillRect',Env.MainWindow,Env.Colours.White,[Env.ScreenInfo.Centre(1)-(LineLength/2),Env.ScreenInfo.Centre(2)+120,Env.ScreenInfo.Centre(1)+(LineLength/2),Env.ScreenInfo.Centre(2)+125]);
+                        TotalLengthLine = LineLength;
+                        LineDetails = [(Env.ScreenInfo.Centre(1)-(LineLength/2)),Env.ScreenInfo.Centre(2)+120,(Env.ScreenInfo.Centre(1)+(LineLength/2)),Env.ScreenInfo.Centre(2)+125];
+                        DrawFormattedText(Env.MainWindow,sprintf('%s',LowAnchor),LineDetails(1)-200,Env.ScreenInfo.Centre(2)+125);
+                        DrawFormattedText(Env.MainWindow,sprintf('%s',HighAnchor),LineDetails(3)+50,Env.ScreenInfo.Centre(2)+125);
+                        if ismembertol(x,LineDetails(1)-10:LineDetails(3))&& ismembertol(y,LineDetails(2)-20:LineDetails(4)+20)
+                            Difference = (LineDetails(3) -x)/2;
+                            NumberToDisplay = ceil((TotalLengthLine-Difference)/LineDivide);
+                            DrawFormattedText(Env.MainWindow,sprintf('%i',NumberToDisplay),'center',Env.ScreenInfo.Centre(2)+150);
 
-                            end
+                        end
                     otherwise
                         Screen('DrawTextures',Env.MainWindow,[Env.ExperimentOne.ResponseOne(Response);Env.ExperimentOne.ResponseTwo(Response)],[],[ResponseBoxCoords]',[],[],[],[ResponseHighlighter1;ResponseHighlighter2]');
 
@@ -257,7 +294,7 @@ for blocks = 1: nBlocks
                         Response =3;
                         LodgeAResponse =2;
 
-                    case (Response ==3 && any(keyIsDown==1) && ismembertol(x,LineDetails(1):LineDetails(3))&& ismembertol(y,LineDetails(2)-10:LineDetails(4)+10)&& LodgeAResponse==2)
+                    case (Response ==3 && any(keyIsDown==1) && ismembertol(x,LineDetails(1)-10:LineDetails(3))&& ismembertol(y,LineDetails(2)-20:LineDetails(4)+20)&& LodgeAResponse==2)
                         DATA.ExperimentOne(blocks).Block(Trials).Confidence = NumberToDisplay;
                         DATA.ExperimentOne(blocks).Block(Trials).ConfidenceRT = GetSecs-JarResponseSystemTime;
 
@@ -272,9 +309,9 @@ for blocks = 1: nBlocks
                 ResponseHighlighter2 = Env.Colours.Black;
 
 
-%                 if BreakMeOut ==1
-%                     break
-%                 end
+                %                 if BreakMeOut ==1
+                %                     break
+                %                 end
 
                 switch DATA.useET
                     case 0

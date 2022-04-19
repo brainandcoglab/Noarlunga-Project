@@ -1,9 +1,16 @@
 %Created by Tess Barich 2021
-function [CreatedJarOne,CreatedJarTwo] =CreateJar(directory,window,window2,MainColourStr,SecondaryColourStr,MainNumber,SecondaryNumber,experimentStr)
+function [CreatedJarOne,CreatedJarTwo] =CreateJar(directory,window,window2,MainColour,SecondaryColour,MainNumber,SecondaryNumber,experimentStr)
+AssertOpenGL;
+global Env Jar Bead JarSize BeadSize BeadXplacement BeadYplacement BeadXY SortXYBead BeadOrder DATA
+ centredBeadRect(1:MainNumber+SecondaryNumber,1)=cell({0});
+switch true
 
-global Env Jar Bead JarSize BeadSize BeadXplacement BeadYplacement BeadXY SortXYBead BeadOrder
+    case isfield(Env,'Stimuli')==0
+        importImages(directory,experimentStr,window)
+    case (isfield(Env.Stimuli,'Name')==1 & ~contains([{Env.Stimuli(:).Name}],experimentStr))
 
-importImages(directory,experimentStr,window)
+        importImages(directory,experimentStr,window)
+end
 
 Jar =contains([{Env.Stimuli.Name}],'Jar');
 [~,Jar]= max([Jar(:)]);
@@ -26,6 +33,7 @@ SpaceInsideJar = [Env.ScreenInfo.Centre(1)-(Env.Stimuli(Jar).Size(1)/2)+(44),...
     Env.ScreenInfo.Centre(2)+(Env.Stimuli(Jar).Size(2)/2)-(30)];
 
 centredJarRect = cell2mat(centredJarRect);
+
 
 for MakeMyPair = 1:2
     BeadXplacement =0;
@@ -54,17 +62,16 @@ for MakeMyPair = 1:2
     end
     switch MakeMyPair
         case 1
-            ColourStr = repmat({MainColourStr},length(Idx2),1);
-            ColourStr(Idx2)={[SecondaryColourStr]};
+            ColourStr = repmat({MainColour},length(Idx2),1);
+            ColourStr(Idx2)={[SecondaryColour]};
 
         case 2
-            ColourStr = repmat({SecondaryColourStr},length(Idx2),1);
-            ColourStr(Idx2)={[MainColourStr]};
+            ColourStr = repmat({SecondaryColour},length(Idx2),1);
+            ColourStr(Idx2)={[MainColour]};
     end
 
     DispStim=[BeadTexture,centredBeadRect,[ColourStr]];
-
-    if size(DispStim)>1
+if  size(DispStim)>1
 
         objecttype = cell2mat(DispStim(:, 1));
         coordinates = cell2mat(DispStim(:, 2));
@@ -74,21 +81,29 @@ for MakeMyPair = 1:2
 
     end
     Screen('DrawTextures',window2,objecttype,[],coordinates,[],[],[],colourmask);
-    Screen('DrawTextures',window2,JarTexture,[],[centredJarRect]);
-
-    if MakeMyPair ==1
+     Screen('DrawTextures',window2,JarTexture,[],[centredJarRect]);
+      
+switch true
+    case MakeMyPair ==1
+        
+   
         OffScreenTextureOneOne = Screen('GetImage',window2,[SizeOfJar],[],[],4);
-        OffScreenTextureOne= Screen('MakeTexture',window,OffScreenTextureOneOne,[]);
+         OffScreenTextureOne= Screen('MakeTexture',window,OffScreenTextureOneOne,[],4);
+        
         CreatedJarOne = OffScreenTextureOne;
         %Env.JarOne = CreatedJarOne;
 
-    elseif MakeMyPair==2
-        OffScreenTextureOneTwo = Screen('GetImage',window2,[SizeOfJar],[],[],4);
-        OffScreenTextureTwo= Screen('MakeTexture',window,OffScreenTextureOneTwo,[]);
+    case MakeMyPair==2
+       
+     
+         OffScreenTextureOneTwo = Screen('GetImage',window2,[SizeOfJar],[],[],4);
+        OffScreenTextureTwo= Screen('MakeTexture',window,OffScreenTextureOneTwo,[],4);
+              
+
         CreatedJarTwo = OffScreenTextureTwo;
         %Env.JarTwo = CreatedJarTwo;
     end
-    Screen('Flip',window);
+
     Screen('Close',window2) %cannot flip the offscreen window, instead need to close the window and reopen it.
     [window2]= Screen('OpenOffscreenWindow',window,Env.Colours.Alpha);
     Env.OffScreenWindow =window2;%open new offscreen window for second drawing

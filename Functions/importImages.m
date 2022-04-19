@@ -5,15 +5,16 @@ AssertOpenGL;
 global Env Pointer %Load globals
 %% Search the pathway for the wanted stimuli
 directMe = dir(directory); %pull directory contents
-directMe = directMe(find(~cellfun(@isdir,{directMe(:).name})));%Filter out all the folders. <- Like our sample folder file
+directMe = directMe(find(~cellfun(@isfolder,{directMe(:).name})));%Filter out all the folders. <- Like our sample folder file
 A = contains([{directMe(:).name}],str); %Search for the common term used in exp stimuli sets.
 %%Load the images and create texture pointers.
-switch true
+switch true 
     case exist('Pointer','var')==1
-        Pointer =Pointer+1;
+        Pointer =Pointer;
     case  exist('Pointer','var')==0
         Pointer =1;
 end
+
 for MakeImages =1: length(directMe) %for 1 to length of our dir
     if A(1,MakeImages)==1 %If A(1,i) does contain the search term, import the image
         [img,~,alpha] = imread(directMe(MakeImages,1).name); %Read the image into matlab, read in alpha
@@ -25,6 +26,9 @@ for MakeImages =1: length(directMe) %for 1 to length of our dir
         Env.Stimuli(Pointer).Size = [width(Env.Stimuli(Pointer).ImageMade),height(Env.Stimuli(Pointer).ImageMade)];
         Env.Stimuli(Pointer).OriginalSize =[width(Env.Stimuli(Pointer).ImageMade),height(Env.Stimuli(Pointer).ImageMade)];
         Pointer=Pointer+1;
+       
+        
+      
 
     end
 end

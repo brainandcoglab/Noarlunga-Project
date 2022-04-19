@@ -13,14 +13,15 @@ AssertOpenGL;
 while KbCheck; end
 
 % structures to pass general information between sub-experiments.
-global DATA Env Calib Pointer  colour
+global DATA Env Calib Pointer  colour  
 
 % automatically switch pwd to location of current file, even if user
 % declared otherwise (accidentally). (Lots of calls to pwd below.)
 [pathstr,name,ext]  = fileparts(mfilename('fullpath'));
 cd(pathstr);
-colour =[]
 
+
+ResponseBoxCoords=[];
 %% Capture demographic data
 inputError = 1;
 while inputError == 1
@@ -156,6 +157,8 @@ Env.Loc_Data = [pwd filesep 'Data'];
 Env.Loc_Stimuli = [pwd filesep 'Stimuli'];
 addpath(Env.Loc_Functions);
 addpath(Env.Loc_Stimuli);
+colour =[];
+Env.Stimuli.Name ='Prefill';
 
 % ET license file (will need to change if we use a different device). Maybe
 % I can build this into the ET setup code to be more automated? <- Done. It
@@ -180,6 +183,7 @@ DATA.debugging = 0;
 Colours.Black = [1 1 1];
 Colours.White = [255 255 255];
 Colours.Yellow = [255 255 0];
+Colours.Purple =[128 0 128];
 Colours.Magenta = [255 0 255];
 Colours.Cyan = [0 255 255];
 Colours.Red = [255 0 0 ];
@@ -199,11 +203,14 @@ pause(2)
 
 %% PsychtoolBox setup
 PsychDefaultSetup(2);
+ PsychImaging('PrepareConfiguration');
+  PsychImaging('AddTask', 'General', 'UseFastOffscreenWindows');
 Screen ('Preference', 'SkipSyncTests', 2);% change this to 0 when actually running experiments
 Screen ('Preference', 'DefaultFontSize');% change this to 0 when actually running experiments
-Pointer =0;
+Pointer =1;
+
 ScreenNumber = max(Screen('Screens')); % Selects the screen to display. Sole display = 0.
-[Env.MainWindow, Env.windowRect] = Screen ('OpenWindow', ScreenNumber,Env.Colours.LightGrey,[],[],[],[],[],4);%Open a window using psychimaging and colour it light grey
+[Env.MainWindow, Env.windowRect] =Screen ('OpenWindow', ScreenNumber,Env.Colours.LightGrey,[],[],[],[],[],4);%Open a window using psychimaging and colour it light grey
 [Env.OffScreenWindow]= Screen('OpenOffscreenWindow',Env.MainWindow,Env.Colours.Alpha);
 Env.ScreenInfo= Screen('Resolution', Env.MainWindow); % Get some screen info including resolution, pixel size and hz.
 Env.ScreenInfo.Resolution = [Env.ScreenInfo.width, Env.ScreenInfo.height]; % list the width and height in pixels to a resolution variable
