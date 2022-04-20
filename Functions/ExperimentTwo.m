@@ -122,7 +122,7 @@ for blocks = 1: nBlocks
 
     DATA.ExperimentTwo(blocks).TargetSequence = Sequence(:,SequenceOrder(2));
 
-    [ResponseBoxCoords,Env.ExperimentTwo.ResponseOne,Env.ExperimentTwo.ResponseTwo]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,2,[AnswerQuote1;AnswerQuote2],ResponseBoxandTextColour,3,[Env.ExperimentTwo.MinMaxXY(1,1);Env.ExperimentTwo.MinMaxXY(3,1)],[Env.ExperimentTwo.MinMaxXY(4,1)+120;Env.ExperimentTwo.MinMaxXY(4,1)+120],200,100,12,16,[ColourBoxA;ColourBoxB]');
+    [ResponseBoxCoords,Env.ExperimentTwo.ResponseOne,Env.ExperimentTwo.ResponseTwo]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,2,[AnswerQuote1;AnswerQuote2],ResponseBoxandTextColour,3,[Env.ExperimentTwo.MinMaxXY(1,1);Env.ExperimentTwo.MinMaxXY(3,1)],[Env.ExperimentTwo.MinMaxXY(4,1)+230;Env.ExperimentTwo.MinMaxXY(4,1)+230],200,100,12,16,[ColourBoxA;ColourBoxB]');
     FrameIndex =1;
     Env.ResponseBoxCoords =ResponseBoxCoords;
     for Trials =1:nTrials
@@ -155,10 +155,10 @@ for blocks = 1: nBlocks
 
                 switch Response
                     case 1
-                        DrawFormattedText(Env.MainWindow,sprintf('%s',QuestionQuote),'center',100);
+                        DrawFormattedText(Env.MainWindow,sprintf('%s',QuestionQuote),'center',600);
 
                     case 2
-                        DrawFormattedText(Env.MainWindow,sprintf('%s',ConfidenceQuote),'center',100);
+                        DrawFormattedText(Env.MainWindow,sprintf('%s',ConfidenceQuote),'center',600);
 
                 end
 
@@ -171,7 +171,7 @@ for blocks = 1: nBlocks
 
 
                 end
-                Env.HighlightIdx = ( x>= Env.ExperimentTwo.Coordinates(1,:) & x<= Env.ExperimentTwo.Coordinates(3,:) & y>= Env.ExperimentTwo.Coordinates(2,:) & y<= Env.ExperimentTwo.Coordinates(4,:));
+                Env.HighlightIdx = (Response==1 & x>= Env.ExperimentTwo.Coordinates(1,:) & x<= Env.ExperimentTwo.Coordinates(3,:) & y>= Env.ExperimentTwo.Coordinates(2,:) & y<= Env.ExperimentTwo.Coordinates(4,:));
                 checkcolour = (ismember(colour(:,1:end),BoxColour) & Env.HighlightIdx==1);
                 logictest =any(checkcolour==1);
                 switch true
@@ -183,7 +183,7 @@ for blocks = 1: nBlocks
                 CoordinatesIdx = (keyIsDown==1 & x>= Env.ExperimentTwo.Coordinates(1,:) & x<= Env.ExperimentTwo.Coordinates(3,:) & y>= Env.ExperimentTwo.Coordinates(2,:) & y<= Env.ExperimentTwo.Coordinates(4,:));
 
                 switch true
-                    case any(CoordinatesIdx==1)
+                    case any(CoordinatesIdx==1) && Response==1
 
                         if DATA.ExperimentTwo(blocks).Block(Trials).NumBoxtoDecision <25
                             colour(:,CoordinatesIdx)=cell2mat(Sequence(Attempts,Trials))';
@@ -195,7 +195,7 @@ for blocks = 1: nBlocks
                             LodgeAResponse =0;
                             DATA.ExperimentTwo(blocks).Block(Trials).NumBoxtoDecision = nMaxAttempts;%DATA.ExperimentTwo(blocks).Block(Trials).NumBoxtoDecision+1;
                         end
-                    case (any(keyIsDown==1) && ismembertol(x,ResponseBoxCoords(1,1):ResponseBoxCoords(1,3))&& ismembertol(y,ResponseBoxCoords(1,2):ResponseBoxCoords(1,4))&& Response ==1 &&LodgeAResponse==0);
+                    case (DATA.ExperimentTwo(blocks).Block(Trials).NumBoxtoDecision>0 && any(keyIsDown==1) && ismembertol(x,ResponseBoxCoords(1,1):ResponseBoxCoords(1,3))&& ismembertol(y,ResponseBoxCoords(1,2):ResponseBoxCoords(1,4))&& Response ==1 &&LodgeAResponse==0);
                         DATA.ExperimentTwo(blocks).EyeData(FrameIndex).Trigger = 114; % Response Given 14 - 1 represents experiment number and 4 represents Response of A in each block
                         DATA.ExperimentTwo(blocks).Block(Trials).BoxResponseAnswer="ColourA";
                         DATA.ExperimentTwo(blocks).Block(Trials).BoxResponseColour=AnswerQuote1;
@@ -203,7 +203,7 @@ for blocks = 1: nBlocks
                         ResponseSystemTime=GetSecs;
                         LodgeAResponse =1;
                         Response =2;
-                    case (any(keyIsDown==1) && ismembertol(x,ResponseBoxCoords(2,1):ResponseBoxCoords(2,3))&& ismembertol(y,ResponseBoxCoords(2,2):ResponseBoxCoords(2,4)) && Response ==1 && LodgeAResponse==0);
+                    case (DATA.ExperimentTwo(blocks).Block(Trials).NumBoxtoDecision>0 && any(keyIsDown==1) && ismembertol(x,ResponseBoxCoords(2,1):ResponseBoxCoords(2,3))&& ismembertol(y,ResponseBoxCoords(2,2):ResponseBoxCoords(2,4)) && Response ==1 && LodgeAResponse==0);
                         DATA.ExperimentTwo(blocks).EyeData(FrameIndex).Trigger = 115; % Response Given 15 - 1 represents experiment number and 5 represents Response of B for each trial in each block
                         DATA.ExperimentTwo(blocks).Block(Trials).BoxResponseAnswer = "ColourB";
                         DATA.ExperimentTwo(blocks).Block(Trials).BoxResponseColour=AnswerQuote2;

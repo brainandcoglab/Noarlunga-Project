@@ -9,6 +9,7 @@
 % initialize workspace
 clear all;
 close all;
+sca
 AssertOpenGL;
 while KbCheck; end
 
@@ -188,9 +189,9 @@ Colours.Magenta = [255 0 128];
 Colours.Cyan = [0 255 255];
 Colours.Red = [255 0 0 ];
 Colours.RedTransparent = [255 0 0 64];
-Colours.Green = [0 255 0];
+Colours.Green = [32 239 73];
 Colours.GreenTransparent = [0 255 0 64]; % with alpha value for blending.
-Colours.Blue = [0 0 255];
+Colours.Blue = [153 204 255];
 Colours.BlueTransparent = [0 0 255 64];
 Colours.Grey = [127 127 127];
 Colours.DarkGrey = [64 64 64];

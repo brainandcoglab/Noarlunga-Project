@@ -1,12 +1,20 @@
 %Written by Tess Barich 2022
-function [AttentionScore]=Exp1ComprehensionCheck(Directory,window,window2,PracticeColourA,PracticeColourStrA,PracticeColourB,PracticeColourStrB,MainColourNumber,SecondaryColour,experimentStr,Question1,Question2,ResponseOpts1,ResponseOpts2,PracticeInstructs,ResponseBoxColour)
+function Exp1ComprehensionCheck(Directory,window,window2,PracticeColourA,PracticeColourStrA,PracticeColourB,PracticeColourStrB,MainColourNumber,SecondaryColour,experimentStr,Question1,Question2,ResponseOpts1,ResponseOpts2,PracticeInstructs,ResponseBoxColour)
 global Env DATA Jar Bead ResponseBoxCoords BeadSize QuestionQuote1 QuestionQuote2 ConfidenceQuote LowAnchor HighAnchor LineLength LineDivide
 intertrialinterval =0.5;
+blocks =1;
 incorrecttext = "Your answer is INCORRECT, please press ENTER to try again.";
+PracticeEndText =["The practice trial is complete. There will now follow four sets of four trials each. " + ...
+    "Remember for each game, one of the jars will be randomly selected, but you will not be told which one. " + ...
+    "You can request beads, and the computer will draw random beads from the selected jar. " + ...
+    "Your task is to request enough beads in order to decide which jar was selected. " + ...
+    "You can continue requesting beads until you feel confident about making a decision. " + ...
+    "Press ENTER when you are ready to start."];
 [Env.PracticeJarTexture1, Env.PracticeJarTexture2] =CreateJar(Directory,window, window2,PracticeColourA,PracticeColourB ,MainColourNumber,SecondaryColour,experimentStr);
 Xposi(1:height(ResponseOpts2),1)=Env.ScreenInfo.Centre(1);
+Yposi=zeros([height(ResponseOpts2),1]);
 for NumofQs =1:2
-    [TextXPos,TextYPos] =DrawFormattedText(Env.OffScreenWindow,sprintf('%s',Question1),'center',Env.ScreenInfo.Centre(2)-100);
+    [~,TextYPos] =DrawFormattedText(Env.OffScreenWindow,sprintf('%s',Question1),'center',Env.ScreenInfo.Centre(2)-100);
     addY=110;
     for NumofResponses =1: height(ResponseOpts2)
         Yposi(NumofResponses)= TextYPos+addY;
@@ -51,41 +59,107 @@ MoveOn=0;
 FrameIndex=1;
 KbQueueCreate(Env.MouseInfo{1,1}.index,[],2);
 KbQueueStart(Env.MouseInfo{1,1}.index);
+start =GetSecs;
 while MoveOn~=1
     [keyboardDown,~,whichkey]=KbCheck;
+        DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).FrameIndex =FrameIndex;
     %trigger
     DrawFormattedText(Env.MainWindow,sprintf('%s',PracticeInstructs),'center',CentreJarOne(4)+150,[],120,[],[],2);
     Screen('DrawTextures',Env.MainWindow,[Env.PracticeJarTexture1;Env.PracticeJarTexture2],[],[CentreJarOne;CentreJarTwo]');
     DrawFormattedText(Env.MainWindow,sprintf('85%% %s\n15%% %s',JarAStr,JarBStr),CentreJarOne(1)+20,CentreJarOne(4)+20);
     DrawFormattedText(Env.MainWindow,sprintf('85%% %s\n15%% %s',JarBStr,JarAStr),CentreJarTwo(1)+20,CentreJarTwo(4)+20);
     Screen('DrawingFinished',Env.MainWindow);
+
+    switch DATA.useET
+        case 0
+            DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).SystemTime = GetSecs;
+            DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).OnsetTime =  DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).SystemTime  -start;
+
+        case 1
+            switch true
+                case isempty(CurrentSample)==1
+
+                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiLeftEyePos = FirstPassET(1,end).LeftEye.GazePoint.OnDisplayArea;
+                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiRightEyePos = FirstPassET(1,end).RightEye.GazePoint.OnDisplayArea;
+                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiLeftEyePupil = FirstPassET(1,end).LeftEye.Pupil.Diameter;
+                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiRightEyePupil = FirstPassET(1,end).LeftEye.Pupil.Diameter;
+                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiTime = FirstPassET(1,end).SystemTimeStamp;
+
+
+                case isempty(CurrentSample)==0
+
+                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiLeftEyePos= CurrentSample(1,end).LeftEye.GazePoint.OnDisplayArea;
+                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiRightEyePos  = CurrentSample(1,end).RightEye.GazePoint.OnDisplayArea;
+                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiLeftEyePupil = CurrentSample(1,end).LeftEye.Pupil.Diameter;
+                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiRightEyePupil = CurrentSample(1,end).LeftEye.Pupil.Diameter;
+                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiTime = CurrentSample(1,end).SystemTimeStamp;
+
+
+            end
+            CurrentSample = my_eyetracker.get_gaze_data();
+
+    end
+
     if (keyboardDown ==1 && KbName(whichkey)=="Return")
         MoveOn=1;
         %trigger
     end
     [FlipTime,~,EndFlip]=Screen('Flip',Env.MainWindow,[]);
+        DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).FlipTimeStamp=FlipTime;
+
     FrameIndex =FrameIndex+1;
 end
 Response =1;
-
 ResponseHighlighter1 = Env.Colours.Black;
 ResponseHighlighter2 = Env.Colours.Black;
 ResponseHighlighter=ones([width(Env.Colours.Black),height(ResponseOpts2)]);
-start =GetSecs;
+%start =GetSecs;
 blocks =1;
 comprehensionpass=0;
 LodgeAResponse =0;
 displayincorrect =0;
 %trigger
-while comprehensionpass <2
+while comprehensionpass <3
     [keyIsDown]= KbQueueCheck(Env.MouseInfo{1,1}.index);
     [keyboardDown,~,whichkey]=KbCheck;
     [x,y] = GetMouse(Env.MainWindow);
+    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).FrameIndex =FrameIndex;
+
+    switch DATA.useET
+        case 0
+            DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).SystemTime = GetSecs;
+            DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).OnsetTime =  DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).SystemTime  -start;
+
+        case 1
+            switch true
+                case isempty(CurrentSample)==1
+
+                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiLeftEyePos = FirstPassET(1,end).LeftEye.GazePoint.OnDisplayArea;
+                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiRightEyePos = FirstPassET(1,end).RightEye.GazePoint.OnDisplayArea;
+                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiLeftEyePupil = FirstPassET(1,end).LeftEye.Pupil.Diameter;
+                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiRightEyePupil = FirstPassET(1,end).LeftEye.Pupil.Diameter;
+                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiTime = FirstPassET(1,end).SystemTimeStamp;
+
+
+                case isempty(CurrentSample)==0
+
+                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiLeftEyePos= CurrentSample(1,end).LeftEye.GazePoint.OnDisplayArea;
+                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiRightEyePos  = CurrentSample(1,end).RightEye.GazePoint.OnDisplayArea;
+                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiLeftEyePupil = CurrentSample(1,end).LeftEye.Pupil.Diameter;
+                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiRightEyePupil = CurrentSample(1,end).LeftEye.Pupil.Diameter;
+                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiTime = CurrentSample(1,end).SystemTimeStamp;
+
+
+            end
+            CurrentSample = my_eyetracker.get_gaze_data();
+
+    end
     switch displayincorrect
         case 0
             switch Response
                 case 1
                     DrawFormattedText(Env.MainWindow,sprintf('%s',Question1),'center',CentreJarOne(4)+100);
+
                     switch true
                         case (ismembertol(x,ResponseBoxCoords1(1,1):ResponseBoxCoords1(1,3))&& ismembertol(y,ResponseBoxCoords1(1,2):ResponseBoxCoords1(1,4)))
                             ResponseHighlighter1 = Env.Colours.Red;
@@ -94,6 +168,7 @@ while comprehensionpass <2
                             ResponseHighlighter2 = Env.Colours.Red;
 
                     end
+                    mask =[];
                     Screen('DrawTextures',Env.MainWindow,[Env.ExperimentOnePractice.ResponseOne],[],[ResponseBoxCoords1]',[],[],[],[ResponseHighlighter1;ResponseHighlighter2]');
 
                     ResponseHighlighter1 = Env.Colours.Black;
@@ -107,14 +182,20 @@ while comprehensionpass <2
                         case any(highidx==1)
                             ResponseHighlighter(:,highidx) = Env.Colours.Red';
                     end
+                                        mask =[];
+
                     Screen('DrawTextures',Env.MainWindow,[Env.ExperimentOnePractice.ResponseTwo],[],[ResponseBoxCoords2],[],[],[],[ResponseHighlighter]);
                     ResponseHighlighter=ones([width(Env.Colours.Black),height(ResponseOpts2)]);
+
+                case 3
+                    DrawFormattedText(Env.MainWindow,'Check complete, Press ENTER to continue to practice trials','center','center',[],120,[],[],2);
+                    mask =[0,0,0,0];
+
             end
         case 1
             DrawFormattedText(Env.MainWindow,sprintf('%s',incorrecttext),'center',CentreJarOne(4)+150);
-
-
     end
+
     switch true
 
         case (Response ==1 && any(keyIsDown==1) && ismembertol(x,ResponseBoxCoords1(1,1):ResponseBoxCoords1(1,3))&& ismembertol(y,ResponseBoxCoords1(1,2):ResponseBoxCoords1(1,4))&& comprehensionpass==0 );
@@ -151,50 +232,27 @@ while comprehensionpass <2
             DATA.ExperimentOneComprehension(blocks).Block(2).ResponseRT=GetSecs-start;
             LodgeAResponse = LodgeAResponse;
             DATA.ExperimentOneComprehension(blocks).Block(2).NumIncorrectTries=LodgeAResponse-DATA.ExperimentOneComprehension(blocks).Block(1).NumIncorrectTries;
-            %             Response =2;
+            Response =3;
             displayincorrect =0;
             comprehensionpass=2;
         case (displayincorrect==1 && keyboardDown==1 && KbName(whichkey)=="Return")
             displayincorrect=0;
 
-    end
-
-    switch DATA.useET
-        case 0
-            DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).SystemTime = GetSecs;
-            DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).OnsetTime =  DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).SystemTime  -start;
-
-        case 1
-            switch true
-                case isempty(CurrentSample)==1
-
-                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiLeftEyePos = FirstPassET(1,end).LeftEye.GazePoint.OnDisplayArea;
-                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiRightEyePos = FirstPassET(1,end).RightEye.GazePoint.OnDisplayArea;
-                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiLeftEyePupil = FirstPassET(1,end).LeftEye.Pupil.Diameter;
-                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiRightEyePupil = FirstPassET(1,end).LeftEye.Pupil.Diameter;
-                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiTime = FirstPassET(1,end).SystemTimeStamp;
-
-
-                case isempty(CurrentSample)==0
-
-                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiLeftEyePos= CurrentSample(1,end).LeftEye.GazePoint.OnDisplayArea;
-                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiRightEyePos  = CurrentSample(1,end).RightEye.GazePoint.OnDisplayArea;
-                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiLeftEyePupil = CurrentSample(1,end).LeftEye.Pupil.Diameter;
-                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiRightEyePupil = CurrentSample(1,end).LeftEye.Pupil.Diameter;
-                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiTime = CurrentSample(1,end).SystemTimeStamp;
-
-
-            end
-            CurrentSample = my_eyetracker.get_gaze_data();
+        case (Response==3 && keyboardDown==1 && KbName(whichkey)=="Return")
+            DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).Trigger = 115; % Response Given 15 - 1 represents experiment number and 5 represents Response of B for each trial in each block
+            comprehensionpass=3;
 
     end
 
-    Screen('DrawTextures',Env.MainWindow,[Env.PracticeJarTexture1;Env.PracticeJarTexture2],[],[CentreJarOne;CentreJarTwo]');
+
+
+    Screen('DrawTextures',Env.MainWindow,[Env.PracticeJarTexture1;Env.PracticeJarTexture2],[],[CentreJarOne;CentreJarTwo]',[],[],[],mask);
+    if Response<=2
     DrawFormattedText(Env.MainWindow,sprintf('85%% %s\n15%% %s',JarAStr,JarBStr),CentreJarOne(1)+20,CentreJarOne(4)+20);
     DrawFormattedText(Env.MainWindow,sprintf('85%% %s\n15%% %s',JarBStr,JarAStr),CentreJarTwo(1)+20,CentreJarTwo(4)+20);
+    end
     Screen('DrawingFinished',Env.MainWindow);
     [FlipTime,~,EndFlip]=Screen('Flip',Env.MainWindow,[]);
-    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).FrameIndex =FrameIndex;
     DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).FlipTimeStamp=FlipTime;
     FrameIndex=FrameIndex+1;
 
@@ -239,6 +297,38 @@ for blocks =1:1
             while LodgeAResponse <3
                 [keyIsDown]= KbQueueCheck(Env.MouseInfo{1,1}.index);
                 [x,y] = GetMouse(Env.MainWindow);
+                DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).FrameIndex =FrameIndex;
+                DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).FlipTimeStamp=FlipTime;
+                switch DATA.useET
+                    case 0
+                        DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).SystemTime = GetSecs;
+                        DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).OnsetTime =  DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).SystemTime  -start;
+
+                    case 1
+                        switch true
+                            case isempty(CurrentSample)==1
+
+                                DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiLeftEyePos = FirstPassET(1,end).LeftEye.GazePoint.OnDisplayArea;
+                                DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiRightEyePos = FirstPassET(1,end).RightEye.GazePoint.OnDisplayArea;
+                                DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiLeftEyePupil = FirstPassET(1,end).LeftEye.Pupil.Diameter;
+                                DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiRightEyePupil = FirstPassET(1,end).LeftEye.Pupil.Diameter;
+                                DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiTime = FirstPassET(1,end).SystemTimeStamp;
+
+
+                            case isempty(CurrentSample)==0
+
+                                DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiLeftEyePos= CurrentSample(1,end).LeftEye.GazePoint.OnDisplayArea;
+                                DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiRightEyePos  = CurrentSample(1,end).RightEye.GazePoint.OnDisplayArea;
+                                DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiLeftEyePupil = CurrentSample(1,end).LeftEye.Pupil.Diameter;
+                                DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiRightEyePupil = CurrentSample(1,end).LeftEye.Pupil.Diameter;
+                                DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiTime = CurrentSample(1,end).SystemTimeStamp;
+
+
+                        end
+                        CurrentSample = my_eyetracker.get_gaze_data();
+
+                end
+
                 switch Response
                     case 1
                         DrawFormattedText(Env.MainWindow,sprintf('%s',QuestionQuote1),'center',Env.ScreenInfo.Centre(2)+100);
@@ -343,35 +433,6 @@ for blocks =1:1
 
 
 
-                switch DATA.useET
-                    case 0
-                        DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).SystemTime = GetSecs;
-                        DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).OnsetTime =  DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).SystemTime  -start;
-
-                    case 1
-                        switch true
-                            case isempty(CurrentSample)==1
-
-                                DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiLeftEyePos = FirstPassET(1,end).LeftEye.GazePoint.OnDisplayArea;
-                                DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiRightEyePos = FirstPassET(1,end).RightEye.GazePoint.OnDisplayArea;
-                                DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiLeftEyePupil = FirstPassET(1,end).LeftEye.Pupil.Diameter;
-                                DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiRightEyePupil = FirstPassET(1,end).LeftEye.Pupil.Diameter;
-                                DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiTime = FirstPassET(1,end).SystemTimeStamp;
-
-
-                            case isempty(CurrentSample)==0
-
-                                DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiLeftEyePos= CurrentSample(1,end).LeftEye.GazePoint.OnDisplayArea;
-                                DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiRightEyePos  = CurrentSample(1,end).RightEye.GazePoint.OnDisplayArea;
-                                DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiLeftEyePupil = CurrentSample(1,end).LeftEye.Pupil.Diameter;
-                                DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiRightEyePupil = CurrentSample(1,end).LeftEye.Pupil.Diameter;
-                                DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiTime = CurrentSample(1,end).SystemTimeStamp;
-
-
-                        end
-                        CurrentSample = my_eyetracker.get_gaze_data();
-
-                end
 
                 if BreakMeOut ==1
                     break
@@ -379,8 +440,7 @@ for blocks =1:1
                 ScreenFlipTime = FlipTime+(DATA.WaitFrameInput-0.5)*DATA.FlipInterval;
                 FlipTime=  Screen('Flip',Env.MainWindow,ScreenFlipTime);
                 %BIOSEMI HERE
-                DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).FrameIndex =FrameIndex;
-                DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).FlipTimeStamp=FlipTime;
+
                 FrameIndex=FrameIndex+1;
 
             end
@@ -392,6 +452,53 @@ for blocks =1:1
 
     end
 end
+MoveOn=0;
+while MoveOn~=1
+    [keyboardDown,~,whichkey]=KbCheck;
+    %trigger
+    DrawFormattedText(Env.MainWindow,sprintf('%s',PracticeEndText),'center','center',[],120,[],[],2);
+    Screen('DrawingFinished',Env.MainWindow);
+    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).FrameIndex =FrameIndex;
 
-AttentionScore =1;
+    switch DATA.useET
+        case 0
+            DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).SystemTime = GetSecs;
+            DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).OnsetTime =  DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).SystemTime  -start;
+
+        case 1
+            switch true
+                case isempty(CurrentSample)==1
+
+                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiLeftEyePos = FirstPassET(1,end).LeftEye.GazePoint.OnDisplayArea;
+                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiRightEyePos = FirstPassET(1,end).RightEye.GazePoint.OnDisplayArea;
+                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiLeftEyePupil = FirstPassET(1,end).LeftEye.Pupil.Diameter;
+                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiRightEyePupil = FirstPassET(1,end).LeftEye.Pupil.Diameter;
+                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiTime = FirstPassET(1,end).SystemTimeStamp;
+
+
+                case isempty(CurrentSample)==0
+
+                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiLeftEyePos= CurrentSample(1,end).LeftEye.GazePoint.OnDisplayArea;
+                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiRightEyePos  = CurrentSample(1,end).RightEye.GazePoint.OnDisplayArea;
+                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiLeftEyePupil = CurrentSample(1,end).LeftEye.Pupil.Diameter;
+                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiRightEyePupil = CurrentSample(1,end).LeftEye.Pupil.Diameter;
+                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiTime = CurrentSample(1,end).SystemTimeStamp;
+
+
+            end
+            CurrentSample = my_eyetracker.get_gaze_data();
+
+    end
+
+    if (keyboardDown ==1 && KbName(whichkey)=="Return")
+        MoveOn=1;
+        %trigger
+    end
+    [FlipTime,~,EndFlip]=Screen('Flip',Env.MainWindow,[]);
+                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).FlipTimeStamp=FlipTime;
+
+    FrameIndex =FrameIndex+1;
+end
+        KbReleaseWait;
+
 end

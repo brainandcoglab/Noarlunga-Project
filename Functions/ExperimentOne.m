@@ -3,14 +3,14 @@ function ExperimentOne(ConditionSequence) % Bead Jar Task
 %   Declare Globals
 global DATA Env Calib Jar Bead BeadSize ResponseBoxCoords QuestionQuote1 QuestionQuote2 ConfidenceQuote LowAnchor HighAnchor LineLength LineDivide
 %% The Adjustables - The Goblet for One
-QuestionQuote1 = "Would you like to make a decision on which jar beads are being drawn from?";
+QuestionQuote1 = "A random bead has been drawn from the selected jar. Would you like to make a decision on which jar beads are being drawn from?";
 QuestionQuote2 = "Which jar have you decided beads are being drawn from?";
-
 AnswerYesQuote ="Yes\n(Make a decision)";
 AnswerNoQuote = "No\n(See next bead)";
 ConfidenceQuote = "On a scale of 50-100, How confident are you in this decision?";
 LowAnchor ='Complete Guess';
 HighAnchor ='I am sure\nI am right';
+Experiment1EndTxt ="Experiment Complete, thank-you.";
 nTrials =4;
 nBeadstoPresent =10;
 TotalBeadsInJar = 1000; % can set to whatever you want.
@@ -36,14 +36,12 @@ PracticeColourBStr ="magenta";
 PracticeIntructions = [sprintf("In this game you will be shown two jars full of %i coloured beads similar to those above. One jar will contain 85%% beads in one colour (in this case %s), and 15%% beads in another colour (in this case %s). The other jar will contain coloured beads in the opposite ratio." + ...
     " For each game, one of the jars will be randomly selected, but you will not be told which one. The computer will randomly draw beads from the selected jar. Your task is to decide which jar the beads are being drawn from. You can continue requesting beads until you feel confident about making a decision.\nJars will not swap mid-game.\nPlease press ENTER and answer the following simple questions to demonstrate you understood the instructions.",...
 TotalBeadsInJar,PracticeColourAStr,PracticeColourBStr)]; 
-
-
-
 PracticeQ1 = "Will the jars ever swap during a game?";
 PracticeQ2 ="If a large number of beads were drawn from Jar A above (for example), what might you expect?";
 PracticeAnswer1 =["Yes";"No"];
 PracticeAnswer2 =[sprintf("They would all be %s beads",PracticeColourAStr);sprintf("They would all be %s beads",PracticeColourBStr);sprintf("They would probably be a random mix of approx 50%% %s and 50%% %s beads",PracticeColourAStr,PracticeColourBStr);...
     sprintf("They would probably be a random mix of approx 85%% %s and 15%% %s beads",PracticeColourAStr,PracticeColourBStr);sprintf("They would probably be a random mix of approx 15%% %s and 85%% %s beads",PracticeColourAStr,PracticeColourBStr)];
+
 
    TranslateCorrectJarAAnswerIdx= zeros([nTrials,nBlocks],'logical');
          TranslateCorrectJarBAnswerIdx = zeros([nTrials,nBlocks],'logical');
@@ -58,7 +56,7 @@ Screen('TextSize', Env.MainWindow, 20); %  need to reset pen size after.
 [TextXPos,TextYPos] =DrawFormattedText(Env.OffScreenWindow,sprintf('%s',QuestionQuote2),'center',Env.ScreenInfo.Centre(2)+150);
 [ResponseBoxCoords,Env.ExperimentOne.ResponseOne(2),Env.ExperimentOne.ResponseTwo(2)]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,2,["JarA";"JarB"],ResponseBoxandTextColour,3,[Env.ScreenInfo.Centre(1)-60;Env.ScreenInfo.Centre(1)+60],[TextYPos+60;TextYPos+60],100,100,12,16);
 
-[DATA.ExperimentOne.AttentionScore]=Exp1ComprehensionCheck(Env.Loc_Stimuli,Env.MainWindow,Env.OffScreenWindow, PracticeColourA,PracticeColourAStr,PracticeColourB,PracticeColourBStr,MainColourNumberBeads,SecondaryColourNumberBeads,'EXP1',PracticeQ1,PracticeQ2,PracticeAnswer1,PracticeAnswer2,PracticeIntructions,ResponseBoxandTextColour);
+Exp1ComprehensionCheck(Env.Loc_Stimuli,Env.MainWindow,Env.OffScreenWindow, PracticeColourA,PracticeColourAStr,PracticeColourB,PracticeColourBStr,MainColourNumberBeads,SecondaryColourNumberBeads,'EXP1',PracticeQ1,PracticeQ2,PracticeAnswer1,PracticeAnswer2,PracticeIntructions,ResponseBoxandTextColour);
 
 
 
@@ -146,6 +144,7 @@ for blocks = 1: nBlocks
     Sequence(Change2Colour2)={JarBColour};
 
     DATA.ExperimentOne(blocks).TargetSequence = Sequence(:,SequenceOrder(2));
+    BlockStartText =[sprintf("This set of trials will use %s and %s beads. A jar has been randomly selected./nPress ENTER to begin the trials and draw the first bead.",JarAStr,JarBStr)];
     %% Load in and make our images on the fly
     [Env.JarTexture1, Env.JarTexture2] =CreateJar(Env.Loc_Stimuli,Env.MainWindow, Env.OffScreenWindow,JarAColour, JarBColour,MainColourNumberBeads,SecondaryColourNumberBeads,'EXP1');
     Jar =contains([{Env.Stimuli.Name}],'Jar');
@@ -161,6 +160,56 @@ for blocks = 1: nBlocks
     if DATA.useET==1
         FirstPassET = my_eyetracker.get_gaze_data();
     end
+    start =GetSecs;
+MoveOn=0;
+while MoveOn~=1
+    [keyboardDown,~,whichkey]=KbCheck;
+    %trigger
+    DrawFormattedText(Env.MainWindow,sprintf('%s',BlockStartText),'center','center',[],120,[],[],2);
+    Screen('DrawingFinished',Env.MainWindow);
+    DATA.ExperimentOne(blocks).EyeData(FrameIndex).FrameIndex =FrameIndex;
+
+    switch DATA.useET
+        case 0
+            DATA.ExperimentOne(blocks).EyeData(FrameIndex).SystemTime = GetSecs;
+            DATA.ExperimentOne(blocks).EyeData(FrameIndex).OnsetTime =  DATA.ExperimentOne(blocks).EyeData(FrameIndex).SystemTime  -start;
+
+        case 1
+            switch true
+                case isempty(CurrentSample)==1
+
+                    DATA.ExperimentOne(blocks).EyeData(FrameIndex).TobiiLeftEyePos = FirstPassET(1,end).LeftEye.GazePoint.OnDisplayArea;
+                    DATA.ExperimentOne(blocks).EyeData(FrameIndex).TobiiRightEyePos = FirstPassET(1,end).RightEye.GazePoint.OnDisplayArea;
+                    DATA.ExperimentOne(blocks).EyeData(FrameIndex).TobiiLeftEyePupil = FirstPassET(1,end).LeftEye.Pupil.Diameter;
+                    DATA.ExperimentOne(blocks).EyeData(FrameIndex).TobiiRightEyePupil = FirstPassET(1,end).LeftEye.Pupil.Diameter;
+                    DATA.ExperimentOne(blocks).EyeData(FrameIndex).TobiiTime = FirstPassET(1,end).SystemTimeStamp;
+
+
+                case isempty(CurrentSample)==0
+
+                    DATA.ExperimentOne(blocks).EyeData(FrameIndex).TobiiLeftEyePos= CurrentSample(1,end).LeftEye.GazePoint.OnDisplayArea;
+                    DATA.ExperimentOne(blocks).EyeData(FrameIndex).TobiiRightEyePos  = CurrentSample(1,end).RightEye.GazePoint.OnDisplayArea;
+                    DATA.ExperimentOne(blocks).EyeData(FrameIndex).TobiiLeftEyePupil = CurrentSample(1,end).LeftEye.Pupil.Diameter;
+                    DATA.ExperimentOne(blocks).EyeData(FrameIndex).TobiiRightEyePupil = CurrentSample(1,end).LeftEye.Pupil.Diameter;
+                    DATA.ExperimentOne(blocks).EyeData(FrameIndex).TobiiTime = CurrentSample(1,end).SystemTimeStamp;
+
+
+            end
+            CurrentSample = my_eyetracker.get_gaze_data();
+
+    end
+
+    if (keyboardDown ==1 && KbName(whichkey)=="Return")
+        
+        MoveOn=1;
+        %trigger
+    end
+    [FlipTime,~,EndFlip]=Screen('Flip',Env.MainWindow,[]);
+                    DATA.ExperimentOne(blocks).EyeData(FrameIndex).FlipTimeStamp=FlipTime;
+
+    FrameIndex =FrameIndex+1;
+end
+
     for Trials = 1:nTrials % The things that need to happen on each trial
         clear DispStim LodgeAResponse BreakMeOut Response
         DATA.ExperimentOne(blocks).EyeData(FrameIndex).Trigger = 110; % Trigger Given 10 - 1 represents experiment number and 0 represents start of each trial in each block.
@@ -169,9 +218,9 @@ for blocks = 1: nBlocks
         DATA.ExperimentOne(blocks).Block(Trials).CorrectResponse = JarAnswer(Trials,blocks);
         DATA.ExperimentOne(blocks).Block(Trials).TrialSequence =Sequence(:,Trials);
         DATA.ExperimentOne(blocks).Block(Trials).NumBeadstoDecision = 1;
-                
+                        [FlipTime,~,EndFlip]=Screen('Flip',Env.MainWindow,[]);
+
     WaitSecs(intertrialinterval);
-        [FlipTime,~,EndFlip]=Screen('Flip',Env.MainWindow,[]);
     
         for Attempts =1:nBeadstoPresent
             LodgeAResponse =0;
@@ -193,7 +242,7 @@ for blocks = 1: nBlocks
             KbQueueCreate(Env.MouseInfo{1,1}.index,[],2);
             KbQueueStart(Env.MouseInfo{1,1}.index);
             CurrentSample =[];
-            start =GetSecs;
+            %start =GetSecs;
             while LodgeAResponse <3
 
                 [keyIsDown]= KbQueueCheck(Env.MouseInfo{1,1}.index);
@@ -352,4 +401,9 @@ for blocks = 1: nBlocks
     end
 
 end
+ DrawFormattedText(Env.MainWindow,sprintf('%s',Experiment1EndTxt),'center','center',[],120,[],[],2);
+    Screen('DrawingFinished',Env.MainWindow);
+        [FlipTime,~,EndFlip]=Screen('Flip',Env.MainWindow,[]);
+        %trigger
+KbWait([],2)
 end
