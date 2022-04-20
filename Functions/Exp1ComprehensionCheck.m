@@ -1,7 +1,8 @@
 %Written by Tess Barich 2022
-function [AttentionScore]=Exp1AttentionCheck(Directory,window,window2,PracticeColourA,PracticeColourStrA,PracticeColourB,PracticeColourStrB,MainColourNumber,SecondaryColour,experimentStr,Question1,Question2,ResponseOpts1,ResponseOpts2,PracticeInstructs,ResponseBoxColour)
-global Env DATA Jar Bead ResponseBoxCoords2
+function [AttentionScore]=Exp1ComprehensionCheck(Directory,window,window2,PracticeColourA,PracticeColourStrA,PracticeColourB,PracticeColourStrB,MainColourNumber,SecondaryColour,experimentStr,Question1,Question2,ResponseOpts1,ResponseOpts2,PracticeInstructs,ResponseBoxColour)
+global Env DATA Jar Bead ResponseBoxCoords BeadSize QuestionQuote1 QuestionQuote2 ConfidenceQuote LowAnchor HighAnchor LineLength LineDivide
 intertrialinterval =0.5;
+incorrecttext = "Your answer is INCORRECT, please press ENTER to try again.";
 [Env.PracticeJarTexture1, Env.PracticeJarTexture2] =CreateJar(Directory,window, window2,PracticeColourA,PracticeColourB ,MainColourNumber,SecondaryColour,experimentStr);
 Xposi(1:height(ResponseOpts2),1)=Env.ScreenInfo.Centre(1);
 for NumofQs =1:2
@@ -42,66 +43,162 @@ Bead = contains([{Env.Stimuli.Name}],'Bead');
 
 CentreJarOne=my_centreTexture(Env.Stimuli(Jar).Size(1)/2,Env.Stimuli(Jar).Size(2)/2,Env.ScreenInfo.width*0.4,Env.ScreenInfo.Centre(2)/2);
 CentreJarTwo = my_centreTexture(Env.Stimuli(Jar).Size(1)/2,Env.Stimuli(Jar).Size(2)/2,Env.ScreenInfo.width*0.6,Env.ScreenInfo.Centre(2)/2);
-BeadTexture(1:height(PracticeSequence)) ={Env.Stimuli(Bead).TexturePointer}; %repmat({Env.Stimuli(Bead).TexturePointer},height(Sequence),1);
-FrameIndex =1;
+BeadTexture= repmat({Env.Stimuli(Bead).TexturePointer},height(PracticeSequence),1);
 if DATA.useET==1
     FirstPassET = my_eyetracker.get_gaze_data();
 end
-DrawFormattedText(Env.MainWindow,sprintf('%s',PracticeInstructs),'center',CentreJarOne(4)+70);
-Screen('DrawTextures',Env.MainWindow,[Env.PracticeJarTexture1;Env.PracticeJarTexture2],[],[CentreJarOne;CentreJarTwo]');
-DrawFormattedText(Env.MainWindow,sprintf('85%% %s\n15%% %s',JarAStr,JarBStr),CentreJarOne(1)+20,CentreJarOne(4)+20);
-DrawFormattedText(Env.MainWindow,sprintf('85%% %s\n15%% %s',JarBStr,JarAStr),CentreJarTwo(1)+20,CentreJarTwo(4)+20);
-Screen('DrawingFinished',Env.MainWindow);
-[FlipTime,~,EndFlip]=Screen('Flip',Env.MainWindow,[]);
-KbWait([],2);
-attentionpass =0;
-Response =2;
+MoveOn=0;
+FrameIndex=1;
 KbQueueCreate(Env.MouseInfo{1,1}.index,[],2);
 KbQueueStart(Env.MouseInfo{1,1}.index);
+while MoveOn~=1
+    [keyboardDown,~,whichkey]=KbCheck;
+    %trigger
+    DrawFormattedText(Env.MainWindow,sprintf('%s',PracticeInstructs),'center',CentreJarOne(4)+150,[],120,[],[],2);
+    Screen('DrawTextures',Env.MainWindow,[Env.PracticeJarTexture1;Env.PracticeJarTexture2],[],[CentreJarOne;CentreJarTwo]');
+    DrawFormattedText(Env.MainWindow,sprintf('85%% %s\n15%% %s',JarAStr,JarBStr),CentreJarOne(1)+20,CentreJarOne(4)+20);
+    DrawFormattedText(Env.MainWindow,sprintf('85%% %s\n15%% %s',JarBStr,JarAStr),CentreJarTwo(1)+20,CentreJarTwo(4)+20);
+    Screen('DrawingFinished',Env.MainWindow);
+    if (keyboardDown ==1 && KbName(whichkey)=="Return")
+        MoveOn=1;
+        %trigger
+    end
+    [FlipTime,~,EndFlip]=Screen('Flip',Env.MainWindow,[]);
+    FrameIndex =FrameIndex+1;
+end
+Response =1;
+
 ResponseHighlighter1 = Env.Colours.Black;
 ResponseHighlighter2 = Env.Colours.Black;
 ResponseHighlighter=ones([width(Env.Colours.Black),height(ResponseOpts2)]);
 start =GetSecs;
-while attentionpass ~=2
+blocks =1;
+comprehensionpass=0;
+LodgeAResponse =0;
+displayincorrect =0;
+%trigger
+while comprehensionpass <2
     [keyIsDown]= KbQueueCheck(Env.MouseInfo{1,1}.index);
+    [keyboardDown,~,whichkey]=KbCheck;
     [x,y] = GetMouse(Env.MainWindow);
-    switch Response
+    switch displayincorrect
+        case 0
+            switch Response
+                case 1
+                    DrawFormattedText(Env.MainWindow,sprintf('%s',Question1),'center',CentreJarOne(4)+100);
+                    switch true
+                        case (ismembertol(x,ResponseBoxCoords1(1,1):ResponseBoxCoords1(1,3))&& ismembertol(y,ResponseBoxCoords1(1,2):ResponseBoxCoords1(1,4)))
+                            ResponseHighlighter1 = Env.Colours.Red;
+
+                        case (ismembertol(x,ResponseBoxCoords1(2,1):ResponseBoxCoords1(2,3))&& ismembertol(y,ResponseBoxCoords1(2,2):ResponseBoxCoords1(2,4)))
+                            ResponseHighlighter2 = Env.Colours.Red;
+
+                    end
+                    Screen('DrawTextures',Env.MainWindow,[Env.ExperimentOnePractice.ResponseOne],[],[ResponseBoxCoords1]',[],[],[],[ResponseHighlighter1;ResponseHighlighter2]');
+
+                    ResponseHighlighter1 = Env.Colours.Black;
+                    ResponseHighlighter2 = Env.Colours.Black;
+
+                case 2
+                    DrawFormattedText(Env.MainWindow,sprintf('%s',Question2),'center',CentreJarOne(4)+100);
+                    highidx= ((x>=ResponseBoxCoords2(1,:)& x<=ResponseBoxCoords2(3,:))&((y>=ResponseBoxCoords2(2,:)&y<=ResponseBoxCoords2(4,:))));
+                    switch true
+
+                        case any(highidx==1)
+                            ResponseHighlighter(:,highidx) = Env.Colours.Red';
+                    end
+                    Screen('DrawTextures',Env.MainWindow,[Env.ExperimentOnePractice.ResponseTwo],[],[ResponseBoxCoords2],[],[],[],[ResponseHighlighter]);
+                    ResponseHighlighter=ones([width(Env.Colours.Black),height(ResponseOpts2)]);
+            end
         case 1
-            DrawFormattedText(Env.MainWindow,sprintf('%s',Question1),'center',CentreJarOne(4)+70);
-            switch true
-                case (ismembertol(x,ResponseBoxCoords1(1,1):ResponseBoxCoords1(1,3))&& ismembertol(y,ResponseBoxCoords1(1,2):ResponseBoxCoords1(1,4)))
-                    ResponseHighlighter1 = Env.Colours.Red;
-
-                case (ismembertol(x,ResponseBoxCoords1(2,1):ResponseBoxCoords1(2,3))&& ismembertol(y,ResponseBoxCoords1(2,2):ResponseBoxCoords1(2,4)))
-                    ResponseHighlighter2 = Env.Colours.Red;
-
-            end
-            Screen('DrawTextures',Env.MainWindow,[Env.ExperimentOnePractice.ResponseOne],[],[ResponseBoxCoords1]',[],[],[],[ResponseHighlighter1;ResponseHighlighter2]');
-
-             ResponseHighlighter1 = Env.Colours.Black;
-                ResponseHighlighter2 = Env.Colours.Black;
-
-        case 2
-            DrawFormattedText(Env.MainWindow,sprintf('%s',Question2),'center',CentreJarOne(4)+70);
-            highidx= ((x>=ResponseBoxCoords2(1,:)& x<=ResponseBoxCoords2(3,:))&((y>=ResponseBoxCoords2(2,:)&y<=ResponseBoxCoords2(4,:))));
-            switch true
-
-                case any(highidx==1)
-                    ResponseHighlighter(:,highidx) = Env.Colours.Red';
-            end
-    Screen('DrawTextures',Env.MainWindow,[Env.ExperimentOnePractice.ResponseTwo],[],[ResponseBoxCoords2],[],[],[],[ResponseHighlighter]);
-                                      ResponseHighlighter=ones([width(Env.Colours.Black),height(ResponseOpts2)]);
-
+            DrawFormattedText(Env.MainWindow,sprintf('%s',incorrecttext),'center',CentreJarOne(4)+150);
 
 
     end
+    switch true
+
+        case (Response ==1 && any(keyIsDown==1) && ismembertol(x,ResponseBoxCoords1(1,1):ResponseBoxCoords1(1,3))&& ismembertol(y,ResponseBoxCoords1(1,2):ResponseBoxCoords1(1,4))&& comprehensionpass==0 );
+            DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).Trigger = 113; % Response Given 113 - 1 represents experiment number and 3 represents Response to make decision for each trial in each block
+            DATA.ExperimentOneComprehension(blocks).Block(1).ResponseAnswer="Incorrect";
+            DATA.ExperimentOneComprehension(blocks).Block(1).ResponseRT=GetSecs-start;
+            LodgeAResponse =LodgeAResponse+1;
+            DATA.ExperimentOneComprehension(blocks).Block(1).NumIncorrectTries=LodgeAResponse;
+
+            Response = 1; % Yes - which is incorrect, jars dont change
+            displayincorrect =1;
+            comprehensionpass =0;
+        case (Response ==1 && any(keyIsDown==1) && ismembertol(x,ResponseBoxCoords1(2,1):ResponseBoxCoords1(2,3))&& ismembertol(y,ResponseBoxCoords1(2,2):ResponseBoxCoords1(2,4)) && comprehensionpass==0);
+            DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).Trigger = 112; % Response Given 12 - 1 represents experiment number and 2 represents choice to see another bead for each trial in each block
+            DATA.ExperimentOneComprehension(blocks).Block(1).ResponseAnswer="Correct";
+            DATA.ExperimentOneComprehension(blocks).Block(1).ResponseRT=GetSecs-start;
+            LodgeAResponse = LodgeAResponse;
+            DATA.ExperimentOneComprehension(blocks).Block(1).NumIncorrectTries=LodgeAResponse;
+            Response =2;
+            displayincorrect =0;
+            comprehensionpass=1;
+        case (Response ==2 && any(keyIsDown==1) && (ismembertol(x,ResponseBoxCoords2(1,4):ResponseBoxCoords2(3,4))&& ~ismembertol(y,ResponseBoxCoords2(2,4):ResponseBoxCoords2(4,4)))&& comprehensionpass==1);
+            DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).Trigger = 114; % Response Given 14 - 1 represents experiment number and 4 represents Response of A in each block
+            DATA.ExperimentOneComprehension(blocks).Block(2).ResponseAnswer="Incorrect";
+            DATA.ExperimentOneComprehension(blocks).Block(2).ResponseRT=GetSecs-start;
+            LodgeAResponse =LodgeAResponse+1;
+            DATA.ExperimentOneComprehension(blocks).Block(2).NumIncorrectTries=LodgeAResponse-DATA.ExperimentOneComprehension(blocks).Block(1).NumIncorrectTries;
+            %             Response =2;
+            displayincorrect =1;
+            comprehensionpass=1;
+        case (Response ==2 && any(keyIsDown==1) && ismembertol(x,ResponseBoxCoords2(1,4):ResponseBoxCoords2(3,4))&& ismembertol(y,ResponseBoxCoords2(2,4):ResponseBoxCoords2(4,4))&& comprehensionpass==1);
+            DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).Trigger = 115; % Response Given 15 - 1 represents experiment number and 5 represents Response of B for each trial in each block
+            DATA.ExperimentOneComprehension(blocks).Block(2).ResponseAnswer = "Correct";
+            DATA.ExperimentOneComprehension(blocks).Block(2).ResponseRT=GetSecs-start;
+            LodgeAResponse = LodgeAResponse;
+            DATA.ExperimentOneComprehension(blocks).Block(2).NumIncorrectTries=LodgeAResponse-DATA.ExperimentOneComprehension(blocks).Block(1).NumIncorrectTries;
+            %             Response =2;
+            displayincorrect =0;
+            comprehensionpass=2;
+        case (displayincorrect==1 && keyboardDown==1 && KbName(whichkey)=="Return")
+            displayincorrect=0;
+
+    end
+
+    switch DATA.useET
+        case 0
+            DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).SystemTime = GetSecs;
+            DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).OnsetTime =  DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).SystemTime  -start;
+
+        case 1
+            switch true
+                case isempty(CurrentSample)==1
+
+                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiLeftEyePos = FirstPassET(1,end).LeftEye.GazePoint.OnDisplayArea;
+                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiRightEyePos = FirstPassET(1,end).RightEye.GazePoint.OnDisplayArea;
+                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiLeftEyePupil = FirstPassET(1,end).LeftEye.Pupil.Diameter;
+                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiRightEyePupil = FirstPassET(1,end).LeftEye.Pupil.Diameter;
+                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiTime = FirstPassET(1,end).SystemTimeStamp;
 
 
-Screen('DrawTextures',Env.MainWindow,[Env.PracticeJarTexture1;Env.PracticeJarTexture2],[],[CentreJarOne;CentreJarTwo]');
-DrawFormattedText(Env.MainWindow,sprintf('85%% %s\n15%% %s',JarAStr,JarBStr),CentreJarOne(1)+20,CentreJarOne(4)+20);
-DrawFormattedText(Env.MainWindow,sprintf('85%% %s\n15%% %s',JarBStr,JarAStr),CentreJarTwo(1)+20,CentreJarTwo(4)+20);
-Screen('DrawingFinished',Env.MainWindow);
-[FlipTime,~,EndFlip]=Screen('Flip',Env.MainWindow,[]);
+                case isempty(CurrentSample)==0
+
+                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiLeftEyePos= CurrentSample(1,end).LeftEye.GazePoint.OnDisplayArea;
+                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiRightEyePos  = CurrentSample(1,end).RightEye.GazePoint.OnDisplayArea;
+                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiLeftEyePupil = CurrentSample(1,end).LeftEye.Pupil.Diameter;
+                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiRightEyePupil = CurrentSample(1,end).LeftEye.Pupil.Diameter;
+                    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).TobiiTime = CurrentSample(1,end).SystemTimeStamp;
+
+
+            end
+            CurrentSample = my_eyetracker.get_gaze_data();
+
+    end
+
+    Screen('DrawTextures',Env.MainWindow,[Env.PracticeJarTexture1;Env.PracticeJarTexture2],[],[CentreJarOne;CentreJarTwo]');
+    DrawFormattedText(Env.MainWindow,sprintf('85%% %s\n15%% %s',JarAStr,JarBStr),CentreJarOne(1)+20,CentreJarOne(4)+20);
+    DrawFormattedText(Env.MainWindow,sprintf('85%% %s\n15%% %s',JarBStr,JarAStr),CentreJarTwo(1)+20,CentreJarTwo(4)+20);
+    Screen('DrawingFinished',Env.MainWindow);
+    [FlipTime,~,EndFlip]=Screen('Flip',Env.MainWindow,[]);
+    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).FrameIndex =FrameIndex;
+    DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).FlipTimeStamp=FlipTime;
+    FrameIndex=FrameIndex+1;
+
+
 end
 
 
@@ -118,7 +215,7 @@ for blocks =1:1
 
         WaitSecs(intertrialinterval);
         [FlipTime,~,EndFlip]=Screen('Flip',Env.MainWindow,[]);
-        for Attempts =1:nBeadstoPresent
+        for Attempts =1:height(PracticeSequence)
             LodgeAResponse =0;
             Response = 1;
             BreakMeOut =0;
@@ -126,7 +223,7 @@ for blocks =1:1
 
             DispStim(Attempts,2)= cell({my_centreTexture(BeadSize(1),BeadSize(2),(Env.ScreenInfo.width*Attempts/17+250),Env.ScreenInfo.Centre(2)+50)});
 
-            DispStim(Attempts,3)= Sequence(Attempts,PracticeTrials);
+            DispStim(Attempts,3)= PracticeSequence(Attempts,PracticeTrials);
             textures = cell2mat(DispStim(:,1));
             textures = transpose(textures);
             coordinates = cell2mat(DispStim(:, 2));
@@ -160,7 +257,7 @@ for blocks =1:1
                         ResponseHighlighter2 = Env.Colours.Red;
 
                 end
-                Screen('DrawTextures',Env.MainWindow,[Env.JarTexture1;Env.JarTexture2],[],[CentreJarOne;CentreJarTwo]');
+                Screen('DrawTextures',Env.MainWindow,[Env.PracticeJarTexture1;Env.PracticeJarTexture2],[],[CentreJarOne;CentreJarTwo]');
 
                 DrawFormattedText(Env.MainWindow,sprintf('85%% %s\n15%% %s',JarAStr,JarBStr),CentreJarOne(1)+20,CentreJarOne(4)+20);
                 DrawFormattedText(Env.MainWindow,sprintf('85%% %s\n15%% %s',JarBStr,JarAStr),CentreJarTwo(1)+20,CentreJarTwo(4)+20);
@@ -180,7 +277,7 @@ for blocks =1:1
 
                         end
                     otherwise
-                        Screen('DrawTextures',Env.MainWindow,[Env.ExperimentOnePractice.ResponseOne(Response);Env.ExperimentOnePractice.ResponseTwo(Response)],[],[ResponseBoxCoords]',[],[],[],[ResponseHighlighter1;ResponseHighlighter2]');
+                        Screen('DrawTextures',Env.MainWindow,[Env.ExperimentOne.ResponseOne(Response);Env.ExperimentOne.ResponseTwo(Response)],[],[ResponseBoxCoords]',[],[],[],[ResponseHighlighter1;ResponseHighlighter2]');
 
                 end
 
@@ -244,9 +341,7 @@ for blocks =1:1
                 ResponseHighlighter2 = Env.Colours.Black;
 
 
-                %                 if BreakMeOut ==1
-                %                     break
-                %                 end
+
 
                 switch DATA.useET
                     case 0

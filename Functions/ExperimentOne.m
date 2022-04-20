@@ -1,7 +1,7 @@
 %Written by Tess Barich 2021.
 function ExperimentOne(ConditionSequence) % Bead Jar Task
 %   Declare Globals
-global DATA Env Calib Jar Bead BeadSize 
+global DATA Env Calib Jar Bead BeadSize ResponseBoxCoords QuestionQuote1 QuestionQuote2 ConfidenceQuote LowAnchor HighAnchor LineLength LineDivide
 %% The Adjustables - The Goblet for One
 QuestionQuote1 = "Would you like to make a decision on which jar beads are being drawn from?";
 QuestionQuote2 = "Which jar have you decided beads are being drawn from?";
@@ -28,14 +28,13 @@ intertrialinterval =0.5;
 ResponseBoxandTextColour = Env.Colours.White;
 LineLength =600; %pixels
 LineDivide =LineLength/100;
-WaitFrames =1;
 
 PracticeColourA = Env.Colours.Purple;
 PracticeColourAStr ="purple";
 PracticeColourB =Env.Colours.Magenta;
 PracticeColourBStr ="magenta";
-PracticeIntructions = [sprintf("In this game you will be shown two jars full of %i coloured beads similar to those above.\nOne jar will contain 85%% beads in one colour (in this case %s), and 15%% beads in another colour (in this case %s).\nThe other jar will contain coloured beads in the opposite ratio" + ...
-    "\nFor each game, one of the jars will be randomly selected, but you will not be told which one.\nThe computer will randomly draw beads from the selected jar.\nYour task is to decide which jar the beads are being drawn from.\nYou can continue requesting beads until you feel confident about making a decision.\nJars will not swap mid-game.\nPlease answer the following simple questions to demonstrate you understood the instructions.",...
+PracticeIntructions = [sprintf("In this game you will be shown two jars full of %i coloured beads similar to those above. One jar will contain 85%% beads in one colour (in this case %s), and 15%% beads in another colour (in this case %s). The other jar will contain coloured beads in the opposite ratio." + ...
+    " For each game, one of the jars will be randomly selected, but you will not be told which one. The computer will randomly draw beads from the selected jar. Your task is to decide which jar the beads are being drawn from. You can continue requesting beads until you feel confident about making a decision.\nJars will not swap mid-game.\nPlease press ENTER and answer the following simple questions to demonstrate you understood the instructions.",...
 TotalBeadsInJar,PracticeColourAStr,PracticeColourBStr)]; 
 
 
@@ -52,22 +51,16 @@ PracticeAnswer2 =[sprintf("They would all be %s beads",PracticeColourAStr);sprin
         JarAnswer=zeros([nTrials,nBlocks]);
 
 Screen('TextSize', Env.MainWindow, 20); %  need to reset pen size after.
-
-[DATA.ExperimentOne.AttentionScore]=Exp1AttentionCheck(Env.Loc_Stimuli,Env.MainWindow,Env.OffScreenWindow, PracticeColourA,PracticeColourAStr,PracticeColourB,PracticeColourBStr,MainColourNumberBeads,SecondaryColourNumberBeads,'EXP1',PracticeQ1,PracticeQ2,PracticeAnswer1,PracticeAnswer2,PracticeIntructions,ResponseBoxandTextColour);
-
-
-%    TranslateCorrectJarAAnswerIdx= zeros([nTrials,nBlocks]);
-%         TranslateCorrectJarBAnswerIdx = zeros([nTrials,nBlocks]);
-%         TranslateCorrectJarAnswer = zeros([nTrials,nBlocks]);
-%         JarAnswer=zeros([nTrials,nBlocks]);
-
-
 [TextXPos,TextYPos] =DrawFormattedText(Env.OffScreenWindow,sprintf('%s',QuestionQuote1),'center',Env.ScreenInfo.Centre(2)+150);
 [ResponseBoxCoords,Env.ExperimentOne.ResponseOne(1),Env.ExperimentOne.ResponseTwo(1)]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,2,[AnswerYesQuote;AnswerNoQuote],ResponseBoxandTextColour,3,[Env.ScreenInfo.Centre(1)-60;Env.ScreenInfo.Centre(1)+60],[TextYPos+60;TextYPos+60],100,100,12,16);
 
 
 [TextXPos,TextYPos] =DrawFormattedText(Env.OffScreenWindow,sprintf('%s',QuestionQuote2),'center',Env.ScreenInfo.Centre(2)+150);
 [ResponseBoxCoords,Env.ExperimentOne.ResponseOne(2),Env.ExperimentOne.ResponseTwo(2)]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,2,["JarA";"JarB"],ResponseBoxandTextColour,3,[Env.ScreenInfo.Centre(1)-60;Env.ScreenInfo.Centre(1)+60],[TextYPos+60;TextYPos+60],100,100,12,16);
+
+[DATA.ExperimentOne.AttentionScore]=Exp1ComprehensionCheck(Env.Loc_Stimuli,Env.MainWindow,Env.OffScreenWindow, PracticeColourA,PracticeColourAStr,PracticeColourB,PracticeColourBStr,MainColourNumberBeads,SecondaryColourNumberBeads,'EXP1',PracticeQ1,PracticeQ2,PracticeAnswer1,PracticeAnswer2,PracticeIntructions,ResponseBoxandTextColour);
+
+
 
 %% Build the sequences
 if DATA.useET ==1;
@@ -308,10 +301,6 @@ for blocks = 1: nBlocks
                 ResponseHighlighter1 = Env.Colours.Black;
                 ResponseHighlighter2 = Env.Colours.Black;
 
-
-                %                 if BreakMeOut ==1
-                %                     break
-                %                 end
 
                 switch DATA.useET
                     case 0
