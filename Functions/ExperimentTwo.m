@@ -1,6 +1,6 @@
 %Written by Tess Barich 2022
 function ExperimentTwo(ConditionSequence)
-global Env DATA  Calib colour
+global Env DATA  Calib colour ResponseBoxCoords4 QuestionQuote ConfidenceQuote LowAnchor HighAnchor LineLength LineDivide
 %% The Adjustables - Paired Fates
 NumOfX =5;
 NumOfY=5;
@@ -9,6 +9,7 @@ StimuliSizeY=50;
 GapBetween =20;
 BlankX=300;
 BlankY =100;
+BlankYP =-15;
 nBlocks =4;
 nTrials =4;
 nMaxAttempts =26;
@@ -28,13 +29,40 @@ Sequence =[{},{},{},{}];
 intertrialinterval =0.5;
 BoxColour =Env.Colours.Grey;
 BoxHighlight =Env.Colours.DarkGrey;
+PResponseBoxandTextColour = Env.Colours.White;
 ResponseBoxandTextColour = Env.Colours.Black;
+
 LineLength =600; %pixels
 LineDivide =LineLength/100; %pixels
 WaitFrames =1;
-
+PracticeInstructions =["You will see 25 squares on the screen ('boxes'). Each box conceals one of two colours shown at the bottom of the screen for each trial. " + ...
+    "One of these colours is always in the majority (80% of boxes), the other colour in the minority (15%% of boxes)." + ...
+    "At the beginning of each trial, all boxes are closed (grey). Your task is to estimate which colour is in the majority (i.e., 85% of boxes). " + ...
+    "To this end, you can open as many boxes as you want, and in whatever order you like, by clicking on them with the left mouse button. " + ...
+    "As soon as you have reached a decision, please click on the respective colour box at the bottom of the screen." + ...
+    "There are 16 trials in total (made of four sets of four colour-pair trials). For all trials, you will be able to open up to 25 boxes (i.e., the maximum number boxes available) before making a decision. " + ...
+    "If you have NOT made a response after opening all 25 boxes, the task will ask you to make a decision on the primary colour. " + ...
+    "For each trial, you will also be asked to provide a confidence rating between 50% - (complete guess) to 100% (I am sure I am right) on your colour choice. "];
+PracticeColourA = Env.Colours.Purple; 
+PracticeColourB =Env.Colours.Magenta;
+PracticeColourAStr = "purple";
+PracticeColourBStr = "magenta";
+PracticeAnswer1= ["Yes";"No"];
+PracticeAnswer2 =[sprintf("They would all be %s boxes",PracticeColourAStr);sprintf("They would all be %s boxes",PracticeColourBStr);sprintf("They would probably be a random mix of approx 50%% %s and 50%% %s boxes",PracticeColourAStr,PracticeColourBStr);...
+    sprintf("They would probably be a random mix of approx 85%% %s and 15%% %s boxes",PracticeColourAStr,PracticeColourBStr);sprintf("They would probably be a random mix of approx 15%% %s and 85%% %s boxes",PracticeColourAStr,PracticeColourBStr)];
+Question1 =["Will the boxes ever close during a game?"];
+Question2 =["Will the boxes change colour once they're opened?"];
+Question3 =[sprintf("If a large number of boxes were opened on a %s game, what might you expect?", PracticeColourAStr)];
+   TranslateCorrectColourBoxAAnswerIdx= zeros([nTrials,nBlocks],'logical');
+         TranslateCorrectColourBoxBAnswerIdx = zeros([nTrials,nBlocks],'logical');
+        TranslateCorrectBoxAnswer(1:nTrials,1:nBlocks)="0";
+        BoxAnswer=zeros([nTrials,nBlocks]);
 
 %% Get the X and Y coordinates for the boxes
+[Env.ExperimentTwoPractice.Coordinates,Env.ExperimentTwoPractice.MinMaxXY]=DetermineXYCoords(Env.MainWindow,Env.MainWindow,NumOfX,NumOfY,StimuliSizeX,StimuliSizeY,GapBetween,BlankX,BlankYP);
+[Env.ExperimentTwo.Coordinates,Env.ExperimentTwo.MinMaxXY]=DetermineXYCoords(Env.MainWindow,Env.MainWindow,NumOfX,NumOfY,StimuliSizeX,StimuliSizeY,GapBetween,BlankX,BlankY);
+[ResponseBoxCoords4,Env.ExperimentTwoPractice.ResponseThree,Env.ExperimentTwoPractice.ResponseFour]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,2,[PracticeColourAStr;PracticeColourBStr],ResponseBoxandTextColour,3,[Env.ExperimentTwo.MinMaxXY(1,1);Env.ExperimentTwo.MinMaxXY(3,1)],[Env.ExperimentTwo.MinMaxXY(4,1)+230;Env.ExperimentTwo.MinMaxXY(4,1)+230],200,100,12,16,[PracticeColourA;PracticeColourB]');
+Exp2ComprehensionCheck(Env.MainWindow,Env.OffScreenWindow,PracticeColourA,PracticeColourAStr,BoxColour,PracticeColourB,PracticeColourBStr,Question1,Question2,Question3,PracticeAnswer1,PracticeAnswer2,PracticeInstructions,PResponseBoxandTextColour);
 [Env.ExperimentTwo.Coordinates,Env.ExperimentTwo.MinMaxXY]=DetermineXYCoords(Env.MainWindow,Env.MainWindow,NumOfX,NumOfY,StimuliSizeX,StimuliSizeY,GapBetween,BlankX,BlankY);
 
 %% Build the sequences
@@ -44,6 +72,7 @@ end
 for blocks = 1: nBlocks
 
     BoxAnswer(:,blocks) = randi(2,[4,1]); % 1 = original sequence, 2 inverted sequence
+    Env.BoxAnswer = BoxAnswer;
     for SequenceBuilding = 1:nBlocks
         switch SequenceOrder(SequenceBuilding)
             case distractorseqone
@@ -83,8 +112,10 @@ for blocks = 1: nBlocks
         end
         TranslateCorrectColourBoxAAnswerIdx(SequenceBuilding,blocks) = BoxAnswer(SequenceBuilding,blocks)==1; %1 = Colour A is the answer
         TranslateCorrectColourBoxBAnswerIdx(SequenceBuilding,blocks) = BoxAnswer(SequenceBuilding,blocks)==2; %2 = Colour B is the answer
-        TranslateCorrectBoxAnswer(TranslateCorrectColourBoxAAnswerIdx(:,blocks),blocks) = "Colour A";
+        Env.Translate = TranslateCorrectColourBoxBAnswerIdx;
+        TranslateCorrectBoxAnswer(TranslateCorrectColourBoxAAnswerIdx(:,blocks),blocks) = "Colour A"; %%maybehere. 
         TranslateCorrectBoxAnswer(TranslateCorrectColourBoxBAnswerIdx(:,blocks),blocks) ="Colour B";
+        Env.TranslateCorrectBoxAnswer= TranslateCorrectBoxAnswer;
     end
     switch  ConditionSequence(blocks)
         case 1
@@ -112,7 +143,7 @@ for blocks = 1: nBlocks
     DATA.ExperimentTwo(blocks).TargetSequenceStr =Sequence(:,SequenceOrder(2));
     AnswerQuote1 = ColourBoxAStr;
     AnswerQuote2 = ColourBoxBStr;
-    TranslateCorrectColour(TranslateCorrectColourBoxAAnswerIdx(:,blocks),blocks) = AnswerQuote1;
+    TranslateCorrectColour(TranslateCorrectColourBoxAAnswerIdx(:,blocks),blocks) = AnswerQuote1; %UP TO HERE SEE WHY ITS REGISTERING AS NAN. 
     TranslateCorrectColour(TranslateCorrectColourBoxBAnswerIdx(:,blocks),blocks) =AnswerQuote2;
 
     Change2Colour =strcmp(Sequence,{'A'});
@@ -122,12 +153,13 @@ for blocks = 1: nBlocks
 
     DATA.ExperimentTwo(blocks).TargetSequence = Sequence(:,SequenceOrder(2));
 
-    [ResponseBoxCoords,Env.ExperimentTwo.ResponseOne,Env.ExperimentTwo.ResponseTwo]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,2,[AnswerQuote1;AnswerQuote2],ResponseBoxandTextColour,3,[Env.ExperimentTwo.MinMaxXY(1,1);Env.ExperimentTwo.MinMaxXY(3,1)],[Env.ExperimentTwo.MinMaxXY(4,1)+230;Env.ExperimentTwo.MinMaxXY(4,1)+230],200,100,12,16,[ColourBoxA;ColourBoxB]');
+    [ResponseBoxCoords3,Env.ExperimentTwo.ResponseOne,Env.ExperimentTwo.ResponseTwo]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,2,[AnswerQuote1;AnswerQuote2],ResponseBoxandTextColour,3,[Env.ExperimentTwo.MinMaxXY(1,1);Env.ExperimentTwo.MinMaxXY(3,1)],[Env.ExperimentTwo.MinMaxXY(4,1)+230;Env.ExperimentTwo.MinMaxXY(4,1)+230],200,100,12,16,[ColourBoxA;ColourBoxB]');
     FrameIndex =1;
-    Env.ResponseBoxCoords =ResponseBoxCoords;
+    Env.ResponseBoxCoords =ResponseBoxCoords3;
     for Trials =1:nTrials
-        DATA.ExperimentTwo(blocks).Block(Trials).CorrectResponseColour = TranslateCorrectColour(Trials,blocks);
-        DATA.ExperimentTwo(blocks).Block(Trials).CorrectResponseBox = TranslateCorrectBoxAnswer(Trials,blocks);
+           
+        DATA.ExperimentTwo(blocks).Block(Trials).CorrectResponseColour = TranslateCorrectBoxAnswer(Trials,blocks);
+        DATA.ExperimentTwo(blocks).Block(Trials).CorrectResponseBox =TranslateCorrectColour(Trials,blocks); 
         DATA.ExperimentTwo(blocks).Block(Trials).TrialSequence =Sequence(:,Trials);
         DATA.ExperimentTwo(blocks).Block(Trials).NumBoxtoDecision = 0;
         Response=1;
@@ -163,10 +195,10 @@ for blocks = 1: nBlocks
                 end
 
                 switch true
-                    case (ismembertol(x,ResponseBoxCoords(1,1):ResponseBoxCoords(1,3))&& ismembertol(y,ResponseBoxCoords(1,2):ResponseBoxCoords(1,4)))
+                    case (ismembertol(x,ResponseBoxCoords3(1,1):ResponseBoxCoords3(1,3))&& ismembertol(y,ResponseBoxCoords3(1,2):ResponseBoxCoords3(1,4)))
                         ResponseHighlighter1 = BoxColour;
 
-                    case (ismembertol(x,ResponseBoxCoords(2,1):ResponseBoxCoords(2,3))&& ismembertol(y,ResponseBoxCoords(2,2):ResponseBoxCoords(2,4)))
+                    case (ismembertol(x,ResponseBoxCoords3(2,1):ResponseBoxCoords3(2,3))&& ismembertol(y,ResponseBoxCoords3(2,2):ResponseBoxCoords3(2,4)))
                         ResponseHighlighter2 = BoxColour;
 
 
@@ -195,7 +227,7 @@ for blocks = 1: nBlocks
                             LodgeAResponse =0;
                             DATA.ExperimentTwo(blocks).Block(Trials).NumBoxtoDecision = nMaxAttempts;%DATA.ExperimentTwo(blocks).Block(Trials).NumBoxtoDecision+1;
                         end
-                    case (DATA.ExperimentTwo(blocks).Block(Trials).NumBoxtoDecision>0 && any(keyIsDown==1) && ismembertol(x,ResponseBoxCoords(1,1):ResponseBoxCoords(1,3))&& ismembertol(y,ResponseBoxCoords(1,2):ResponseBoxCoords(1,4))&& Response ==1 &&LodgeAResponse==0);
+                    case (DATA.ExperimentTwo(blocks).Block(Trials).NumBoxtoDecision>0 && any(keyIsDown==1) && ismembertol(x,ResponseBoxCoords3(1,1):ResponseBoxCoords3(1,3))&& ismembertol(y,ResponseBoxCoords3(1,2):ResponseBoxCoords3(1,4))&& Response ==1 &&LodgeAResponse==0);
                         DATA.ExperimentTwo(blocks).EyeData(FrameIndex).Trigger = 114; % Response Given 14 - 1 represents experiment number and 4 represents Response of A in each block
                         DATA.ExperimentTwo(blocks).Block(Trials).BoxResponseAnswer="ColourA";
                         DATA.ExperimentTwo(blocks).Block(Trials).BoxResponseColour=AnswerQuote1;
@@ -203,7 +235,7 @@ for blocks = 1: nBlocks
                         ResponseSystemTime=GetSecs;
                         LodgeAResponse =1;
                         Response =2;
-                    case (DATA.ExperimentTwo(blocks).Block(Trials).NumBoxtoDecision>0 && any(keyIsDown==1) && ismembertol(x,ResponseBoxCoords(2,1):ResponseBoxCoords(2,3))&& ismembertol(y,ResponseBoxCoords(2,2):ResponseBoxCoords(2,4)) && Response ==1 && LodgeAResponse==0);
+                    case (DATA.ExperimentTwo(blocks).Block(Trials).NumBoxtoDecision>0 && any(keyIsDown==1) && ismembertol(x,ResponseBoxCoords3(2,1):ResponseBoxCoords3(2,3))&& ismembertol(y,ResponseBoxCoords3(2,2):ResponseBoxCoords3(2,4)) && Response ==1 && LodgeAResponse==0);
                         DATA.ExperimentTwo(blocks).EyeData(FrameIndex).Trigger = 115; % Response Given 15 - 1 represents experiment number and 5 represents Response of B for each trial in each block
                         DATA.ExperimentTwo(blocks).Block(Trials).BoxResponseAnswer = "ColourB";
                         DATA.ExperimentTwo(blocks).Block(Trials).BoxResponseColour=AnswerQuote2;
@@ -235,7 +267,7 @@ for blocks = 1: nBlocks
                             DrawFormattedText(Env.MainWindow,sprintf('%i',NumberToDisplay),'center',Env.ScreenInfo.Centre(2)+150);
                         end
                     otherwise
-                        Screen('DrawTextures',Env.MainWindow,[Env.ExperimentTwo.ResponseOne(Response);Env.ExperimentTwo.ResponseTwo(Response)],[],[ResponseBoxCoords]',[],[],[],[ResponseHighlighter1;ResponseHighlighter2]');
+                        Screen('DrawTextures',Env.MainWindow,[Env.ExperimentTwo.ResponseOne(Response);Env.ExperimentTwo.ResponseTwo(Response)],[],[ResponseBoxCoords3]',[],[],[],[ResponseHighlighter1;ResponseHighlighter2]');
 
 
                 end

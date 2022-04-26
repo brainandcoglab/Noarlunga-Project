@@ -8,12 +8,12 @@ cellwidth = StimuliSizeX+GapBetween; % this controls how big you want each grid 
 cellheight = StimuliSizeY+GapBetween; % this controls how big you want each grid box to be by setting the height
 cellcentre = [cellwidth/2, cellheight/2]; % this finds the centre xy of each grid box
 x_width = (numXcolumns*cellwidth)+ (BlankX*2); %how many x pixels we have to draw with.
-y_width = (numYrows*cellheight)+(BlankX*2); %how many y pixels we have to draw with.
+y_width = (numYrows*cellheight)+(BlankY*2); %how many y pixels we have to draw with.
 startXmaskframe = (Env.ScreenInfo.width - x_width)/2; % this is the pixel that we should start drawing our frame on.
-startYmaskframe = (Env.ScreenInfo.height - y_width)/2;% same here
+startYmaskframe = (Env.ScreenInfo.height - x_width)/2;% same here
 endXmaskframe = startXmaskframe + x_width; % this tells you the end pixel (boundary) for the frame, should come out at 1920 if you're using 1920
 endYmaskframe = startYmaskframe + y_width; % same here
-innerframeboundrect = [startXmaskframe + BlankX,startYmaskframe + BlankY, endXmaskframe - BlankX, endYmaskframe - BlankY];
+innerframeboundrect = [startXmaskframe + BlankX,startYmaskframe+BlankY, endXmaskframe - BlankX, endYmaskframe - BlankY];
 innerXframerange = [innerframeboundrect(1),innerframeboundrect(3)]; % broken down into x and y coords
 innerYframerange = [innerframeboundrect(2), innerframeboundrect(4)];
 % outerframerange = [startXmaskframe, startYmaskframe,endXmaskframe,endYmaskframe]; % just tells you the outer frame range, doesn't tell you the limits to the inner frame though. Not overly useful.
@@ -96,8 +96,11 @@ end
             Coordinates = cell({my_centreTexture(StimuliSizeX,StimuliSizeY,Xplacement,Yplacement)});
             Coordinates=cell2mat(Coordinates);
             Coordinates =Coordinates';
-        Max=max([Xplacement,Yplacement])';
-        Min =min([Xplacement,Yplacement])';
+            x = [Coordinates(1,:),Coordinates(3,:)]';
+            y = [Coordinates(2,:),Coordinates(4,:)]';
+
+        Max=max([x,y])';
+        Min =min([x,y])';
 MinMaxXY=[Min;Max];
 
 

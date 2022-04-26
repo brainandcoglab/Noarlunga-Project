@@ -144,7 +144,7 @@ for blocks = 1: nBlocks
     Sequence(Change2Colour2)={JarBColour};
 
     DATA.ExperimentOne(blocks).TargetSequence = Sequence(:,SequenceOrder(2));
-    BlockStartText =[sprintf("This set of trials will use %s and %s beads. A jar has been randomly selected./nPress ENTER to begin the trials and draw the first bead.",JarAStr,JarBStr)];
+    BlockStartText =[sprintf("This set of trials will use %s and %s beads. A jar has been randomly selected.\nPress ENTER to begin the trials and draw the first bead.",JarAStr,JarBStr)];
     %% Load in and make our images on the fly
     [Env.JarTexture1, Env.JarTexture2] =CreateJar(Env.Loc_Stimuli,Env.MainWindow, Env.OffScreenWindow,JarAColour, JarBColour,MainColourNumberBeads,SecondaryColourNumberBeads,'EXP1');
     Jar =contains([{Env.Stimuli.Name}],'Jar');
@@ -269,8 +269,8 @@ end
                 end
                 Screen('DrawTextures',Env.MainWindow,[Env.JarTexture1;Env.JarTexture2],[],[CentreJarOne;CentreJarTwo]');
 
-                DrawFormattedText(Env.MainWindow,sprintf('85%% %s\n15%% %s',JarAStr,JarBStr),CentreJarOne(1)+20,CentreJarOne(4)+20);
-                DrawFormattedText(Env.MainWindow,sprintf('85%% %s\n15%% %s',JarBStr,JarAStr),CentreJarTwo(1)+20,CentreJarTwo(4)+20);
+                DrawFormattedText(Env.MainWindow,sprintf('Jar A\n85%% %s 15%% %s',JarAStr,JarBStr),CentreJarOne(1)+20,CentreJarOne(4)+20);
+    DrawFormattedText(Env.MainWindow,sprintf('Jar B\n85%% %s 15%% %s',JarBStr,JarAStr),CentreJarTwo(1)+20,CentreJarTwo(4)+20);
                 Screen('DrawTextures',Env.MainWindow,textures,[],coordinates,[],[],[],colourmask);
 
                 switch true

@@ -20,7 +20,7 @@ CorrectAnswerIdx =contains(Env.ExperimentThree.RecognitionWords,Env.ExperimentTh
 
 [Env.FixCrossTexture] = BuildMeACross(Env.MainWindow,Env.OffScreenWindow,widthX,widthY,Env.Colours.Black);
 [TextXPos,TextYPos] =DrawFormattedText(Env.OffScreenWindow,sprintf('%s',QuestionQuote1),'center',Env.ScreenInfo.Centre(2)+150);
-[ResponseBoxCoords,Env.ExperimentThree.ResponseOne,Env.ExperimentThree.ResponseTwo]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,2,["Old";"New"],ResponseBoxandTextColour,3,[Env.ScreenInfo.Centre(1)-60;Env.ScreenInfo.Centre(1)+60],[TextYPos+60;TextYPos+60],100,100,12,16);
+[ResponseBoxCoords4,Env.ExperimentThree.ResponseOne,Env.ExperimentThree.ResponseTwo]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,2,["Old";"New"],ResponseBoxandTextColour,3,[Env.ScreenInfo.Centre(1)-60;Env.ScreenInfo.Centre(1)+60],[TextYPos+60;TextYPos+60],100,100,12,16);
 nEncodingWords = height(Env.ExperimentThree.EncodingWords);
 nRecognitionWords =height(Env.ExperimentThree.RecognitionWords);
 EncodingInstructions = 'You are about to be shown a list of words.\nPlease remember them as well as you can';
@@ -43,8 +43,8 @@ Screen('TextSize', Env.MainWindow, 50); %  need to reset pen size after.
 DATA.FlipTime =FlipTime;
 KbWait([],2);
 %trigger here
-phases=2;
-%for phases = 1:nPhases
+% phases=2;
+for phases = 1:nPhases
 switch phases
     case 1
         for blocks =1:nBlocks
@@ -144,10 +144,10 @@ switch phases
                     end
 
                     switch true
-                        case (ismembertol(x,ResponseBoxCoords(1,1):ResponseBoxCoords(1,3))&& ismembertol(y,ResponseBoxCoords(1,2):ResponseBoxCoords(1,4)))
+                        case (ismembertol(x,ResponseBoxCoords4(1,1):ResponseBoxCoords4(1,3))&& ismembertol(y,ResponseBoxCoords4(1,2):ResponseBoxCoords4(1,4)))
                             ResponseHighlighter1 = Env.Colours.Red;
 
-                        case (ismembertol(x,ResponseBoxCoords(2,1):ResponseBoxCoords(2,3))&& ismembertol(y,ResponseBoxCoords(2,2):ResponseBoxCoords(2,4)))
+                        case (ismembertol(x,ResponseBoxCoords4(2,1):ResponseBoxCoords4(2,3))&& ismembertol(y,ResponseBoxCoords4(2,2):ResponseBoxCoords4(2,4)))
                             ResponseHighlighter2 = Env.Colours.Red;
 
                     end
@@ -166,7 +166,7 @@ switch phases
 
                             end
                         otherwise
-                            Screen('DrawTextures',Env.MainWindow,[Env.ExperimentThree.ResponseOne(Response);Env.ExperimentThree.ResponseTwo(Response)],[],[ResponseBoxCoords]',[],[],[],[ResponseHighlighter1;ResponseHighlighter2]');
+                            Screen('DrawTextures',Env.MainWindow,[Env.ExperimentThree.ResponseOne(Response);Env.ExperimentThree.ResponseTwo(Response)],[],[ResponseBoxCoords4]',[],[],[],[ResponseHighlighter1;ResponseHighlighter2]');
                     end
 
                     Screen('TextSize', Env.MainWindow, 50); %  need to reset pen size after.
@@ -178,7 +178,7 @@ switch phases
 
                     switch true
 
-                        case (Response ==1 && any(keyIsDown==1) && ismembertol(x,ResponseBoxCoords(1,1):ResponseBoxCoords(1,3))&& ismembertol(y,ResponseBoxCoords(1,2):ResponseBoxCoords(1,4)) &&LodgeAResponse==0);
+                        case (Response ==1 && any(keyIsDown==1) && ismembertol(x,ResponseBoxCoords4(1,1):ResponseBoxCoords4(1,3))&& ismembertol(y,ResponseBoxCoords4(1,2):ResponseBoxCoords4(1,4)) &&LodgeAResponse==0);
                             DATA.ExperimentThree(blocks).EyeData(FrameIndex).Trigger = 114; % Response Given 14 - 1 represents experiment number and 4 represents Response of A in each block
                             DATA.ExperimentThree(phases).Phase(blocks).Blocks(RecognitionPhase).ResponseWordStr="Old";
                              switch DATA.ExperimentThree(phases).Phase(blocks).Blocks(RecognitionPhase).CorrectAnswer
@@ -193,7 +193,7 @@ switch phases
                             LodgeAResponse =1;
                             Response =2;
 
-                        case (Response ==1 && any(keyIsDown==1) && ismembertol(x,ResponseBoxCoords(2,1):ResponseBoxCoords(2,3))&& ismembertol(y,ResponseBoxCoords(2,2):ResponseBoxCoords(2,4)) &&  LodgeAResponse==0);
+                        case (Response ==1 && any(keyIsDown==1) && ismembertol(x,ResponseBoxCoords4(2,1):ResponseBoxCoords4(2,3))&& ismembertol(y,ResponseBoxCoords4(2,2):ResponseBoxCoords4(2,4)) &&  LodgeAResponse==0);
                             DATA.ExperimentThree(blocks).EyeData(FrameIndex).Trigger = 115; % Response Given 15 - 1 represents experiment number and 5 represents Response of B for each trial in each block
                             DATA.ExperimentThree(phases).Phase(blocks).Blocks(RecognitionPhase).ResponseWordStr="New";
                             switch DATA.ExperimentThree(phases).Phase(blocks).Blocks(RecognitionPhase).CorrectAnswer

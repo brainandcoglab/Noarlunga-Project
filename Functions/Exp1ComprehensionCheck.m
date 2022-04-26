@@ -11,6 +11,7 @@ PracticeEndText =["The practice trial is complete. There will now follow four se
     "You can continue requesting beads until you feel confident about making a decision. " + ...
     "Press ENTER when you are ready to start."];
 [Env.PracticeJarTexture1, Env.PracticeJarTexture2] =CreateJar(Directory,window, window2,PracticeColourA,PracticeColourB ,MainColourNumber,SecondaryColour,experimentStr);
+
 Xposi(1:height(ResponseOpts2),1)=Env.ScreenInfo.Centre(1);
 Yposi=zeros([height(ResponseOpts2),1]);
 for NumofQs =1:2
@@ -66,8 +67,8 @@ while MoveOn~=1
     %trigger
     DrawFormattedText(Env.MainWindow,sprintf('%s',PracticeInstructs),'center',CentreJarOne(4)+150,[],120,[],[],2);
     Screen('DrawTextures',Env.MainWindow,[Env.PracticeJarTexture1;Env.PracticeJarTexture2],[],[CentreJarOne;CentreJarTwo]');
-    DrawFormattedText(Env.MainWindow,sprintf('85%% %s\n15%% %s',JarAStr,JarBStr),CentreJarOne(1)+20,CentreJarOne(4)+20);
-    DrawFormattedText(Env.MainWindow,sprintf('85%% %s\n15%% %s',JarBStr,JarAStr),CentreJarTwo(1)+20,CentreJarTwo(4)+20);
+     DrawFormattedText(Env.MainWindow,sprintf('Jar A\n85%% %s 15%% %s',JarAStr,JarBStr),CentreJarOne(1)+20,CentreJarOne(4)+20);
+    DrawFormattedText(Env.MainWindow,sprintf('Jar B\n85%% %s 15%% %s',JarBStr,JarAStr),CentreJarTwo(1)+20,CentreJarTwo(4)+20);
     Screen('DrawingFinished',Env.MainWindow);
 
     switch DATA.useET
@@ -248,8 +249,8 @@ while comprehensionpass <3
 
     Screen('DrawTextures',Env.MainWindow,[Env.PracticeJarTexture1;Env.PracticeJarTexture2],[],[CentreJarOne;CentreJarTwo]',[],[],[],mask);
     if Response<=2
-    DrawFormattedText(Env.MainWindow,sprintf('85%% %s\n15%% %s',JarAStr,JarBStr),CentreJarOne(1)+20,CentreJarOne(4)+20);
-    DrawFormattedText(Env.MainWindow,sprintf('85%% %s\n15%% %s',JarBStr,JarAStr),CentreJarTwo(1)+20,CentreJarTwo(4)+20);
+  DrawFormattedText(Env.MainWindow,sprintf('Jar A\n85%% %s 15%% %s',JarAStr,JarBStr),CentreJarOne(1)+20,CentreJarOne(4)+20);
+    DrawFormattedText(Env.MainWindow,sprintf('Jar B\n85%% %s 15%% %s',JarBStr,JarAStr),CentreJarTwo(1)+20,CentreJarTwo(4)+20);
     end
     Screen('DrawingFinished',Env.MainWindow);
     [FlipTime,~,EndFlip]=Screen('Flip',Env.MainWindow,[]);
@@ -349,8 +350,8 @@ for blocks =1:1
                 end
                 Screen('DrawTextures',Env.MainWindow,[Env.PracticeJarTexture1;Env.PracticeJarTexture2],[],[CentreJarOne;CentreJarTwo]');
 
-                DrawFormattedText(Env.MainWindow,sprintf('85%% %s\n15%% %s',JarAStr,JarBStr),CentreJarOne(1)+20,CentreJarOne(4)+20);
-                DrawFormattedText(Env.MainWindow,sprintf('85%% %s\n15%% %s',JarBStr,JarAStr),CentreJarTwo(1)+20,CentreJarTwo(4)+20);
+           DrawFormattedText(Env.MainWindow,sprintf('Jar A\n85%% %s 15%% %s',JarAStr,JarBStr),CentreJarOne(1)+20,CentreJarOne(4)+20);
+    DrawFormattedText(Env.MainWindow,sprintf('Jar B\n85%% %s 15%% %s',JarBStr,JarAStr),CentreJarTwo(1)+20,CentreJarTwo(4)+20);
                 Screen('DrawTextures',Env.MainWindow,textures,[],coordinates,[],[],[],colourmask);
 
                 switch true
