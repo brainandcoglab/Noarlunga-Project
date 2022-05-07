@@ -34,6 +34,7 @@ ResponseBoxandTextColour = Env.Colours.Black;
 AttentionOneQ ="On the previous screen did you notice anything unusual about the trial?";
 AttentionTwoQ ="What did you see that was unusual?";
 AttentionThanks ="Thank you for your response, this was a bonus trial to check your attention. The regular task will now recommence with the next trial, Press ENTER to continue";
+Experiment2EndTxt ="Experiment Complete, thank-you. Press ENTER to continue";
 
 
 LineLength =600; %pixels
@@ -481,5 +482,40 @@ for blocks = 1: nBlocks
             end
         end
     end
+%% First, write a Matlab file filled with all relevant DATA.
+    if exist('ExptData', 'dir') == 0
+        mkdir('ExptData\EXP2');
+    end
+    if exist('ExptData\EXP2\combined','dir')==0
+        mkdir('ExptData\EXP2\combined');
+    end
+
+    ExcelFile = ['ExptData\EXP2\myBehaviouralDataP', num2str(DATA.participantNum), '_B', num2str(blocks),'_Data', '.xlsx'];
+    if isfile(ExcelFile)==1
+        ExcelFile = ['ExptData\EXP2\myBehaviouralDataP', num2str(DATA.participantNum),'_B',num2str(blocks),'_Data','DOUBLECHANGEPNUM', '.xlsx'];
+    end
+    %xlswrite(ExcelFile,stimuli);
+    writetable(struct2table(DATA.ExperimentTwo(blocks).Block), ExcelFile);
+    if exist('OutputData', 'var')==1
+        OutputData = [OutputData,DATA.ExperimentTwo(blocks).Block];
+    else
+        OutputData = DATA.ExperimentTwo(blocks).Block;
+    end
+
 end
+DrawFormattedText(Env.MainWindow,sprintf('%s',Experiment2EndTxt),'center','center',[],120,[],[],2);
+Screen('DrawingFinished',Env.MainWindow);
+[FlipTime,~,EndFlip]=Screen('Flip',Env.MainWindow,[]);
+FileName = ['ExptData\EXP2_',num2str(DATA.participantNum),'.mat'];
+save(FileName)
+ExcelFile = ['ExptData\EXP2\combined\myBehaviouralDataP', num2str(DATA.participantNum), '_B', num2str(blocks),'_Combined', '.xlsx'];
+
+if isfile(ExcelFile)==1
+    ExcelFile = ['ExptData\EXP2\combined\myBehaviouralDataP', num2str(DATA.participantNum),'_B',num2str(blocks),'_Combined','DOUBLECHANGEPNUM', '.xlsx'];
+end
+writetable(struct2table(OutputData), ExcelFile);
+
+%  my_eyetracker.stop_gaze_data();
+%trigger
+KbWait([],2)
 end

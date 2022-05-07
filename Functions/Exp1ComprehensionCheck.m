@@ -280,15 +280,8 @@ end
     if isfile(ExcelFile)==1
         ExcelFile = ['ExptData\EXP1\myComprehensionDataP', num2str(DATA.participantNum),'_B',num2str(blocks),'_Data','DOUBLECHANGEPNUM', '.xlsx'];
     end
-    %xlswrite(ExcelFile,stimuli);
     writetable(struct2table(DATA.ExperimentOneComprehension), ExcelFile);
-%     if exist('OutputData', 'var')==1
-%         OutputData = [OutputData,DATA.ExperimentOneComprehension];
-%     else
-%         OutputData = DATA.DATA.ExperimentOneComprehension;
-%     end
-% 
-%     clear OutputData
+
 
 
 for blocks =1:1

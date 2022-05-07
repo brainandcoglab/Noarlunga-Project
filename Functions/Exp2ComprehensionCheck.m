@@ -315,6 +315,18 @@ while comprehensionpass <4
 
 end
 
+  if exist('ExptData', 'dir') == 0
+        mkdir('ExptData\EXP2');
+    end
+    if exist('ExptData\EXP2\combined','dir')==0
+        mkdir('ExptData\EXP2\combined');
+    end
+  
+    ExcelFile = ['ExptData\EXP2\myComprehensionDataP', num2str(DATA.participantNum), '_B', num2str(blocks),'_Data', '.xlsx'];
+    if isfile(ExcelFile)==1
+        ExcelFile = ['ExptData\EXP2\myComprehensionDataP', num2str(DATA.participantNum),'_B',num2str(blocks),'_Data','DOUBLECHANGEPNUM', '.xlsx'];
+    end
+    writetable(struct2table(DATA.ExperimentTwoComprehension), ExcelFile);
 
 
 for blocks =1:1
@@ -497,6 +509,21 @@ for blocks =1:1
         end
     end
 end
+
+  %% First, write a Matlab file filled with all relevant DATA.
+    if exist('ExptData', 'dir') == 0
+        mkdir('ExptData\EXP2');
+    end
+    if exist('ExptData\EXP2\combined','dir')==0
+        mkdir('ExptData\EXP2\combined');
+    end
+  
+    ExcelFile = ['ExptData\EXP2\myPracticeDataP', num2str(DATA.participantNum), '_B', num2str(blocks),'_Data', '.xlsx'];
+    if isfile(ExcelFile)==1
+        ExcelFile = ['ExptData\EXP2\myPracticeDataP', num2str(DATA.participantNum),'_B',num2str(blocks),'_Data','DOUBLECHANGEPNUM', '.xlsx'];
+    end
+    writetable(struct2table(DATA.ExperimentTwoPractice(blocks).Block), ExcelFile);
+
 MoveOn=0;
 while MoveOn~=1
     [keyboardDown,~,whichkey]=KbCheck;

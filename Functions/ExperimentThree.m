@@ -14,6 +14,8 @@ QuestionQuote1 = 'Is this word an old word, or a new word?';
 QuestionQuote2 = 'How confident are you that you have or have not seen this word before?';
 LowAnchor ='Complete Guess';
 HighAnchor ='Definitely Old/New';
+Experiment3EndTxt ="Experiment Complete, thank-you. Press ENTER to continue";
+
 [Env.ExperimentThree.Raw.EncodingLists,Env.ExperimentThree.EncodingWords,Env.ExperimentThree.Raw.RecognitionLists,...
     Env.ExperimentThree.RecognitionWords,Env.ExperimentThree.Raw.LureLists,Env.ExperimentThree.SmoothLureLists]=ImportandSortMyLists(fileDirectory,searchString);
 CorrectAnswerIdx =contains(Env.ExperimentThree.RecognitionWords,Env.ExperimentThree.EncodingWords,'IgnoreCase',true);
@@ -268,8 +270,42 @@ switch phases
             KbWait([],2);
 
         end
+        
+            if exist('ExptData', 'dir') == 0
+        mkdir('ExptData\EXP3');
+    end
+    if exist('ExptData\EXP3\combined','dir')==0
+        mkdir('ExptData\EXP3\combined');
+    end
+
+    ExcelFile = ['ExptData\EXP3\myBehaviouralDataP', num2str(DATA.participantNum), '_B', num2str(blocks),'_Data', '.xlsx'];
+    if isfile(ExcelFile)==1
+        ExcelFile = ['ExptData\EXP3\myBehaviouralDataP', num2str(DATA.participantNum),'_B',num2str(blocks),'_Data','DOUBLECHANGEPNUM', '.xlsx'];
+    end
+    %xlswrite(ExcelFile,stimuli);
+    writetable(struct2table(DATA.ExperimentThree(blocks).Block), ExcelFile);
+    if exist('OutputData', 'var')==1
+        OutputData = [OutputData,DATA.ExperimentThree(blocks).Block];
+    else
+        OutputData = DATA.ExperimentThree(blocks).Block;
+    end
 
 end
 
 end
-%end
+DrawFormattedText(Env.MainWindow,sprintf('%s',Experiment3EndTxt),'center','center',[],120,[],[],2);
+Screen('DrawingFinished',Env.MainWindow);
+[FlipTime,~,EndFlip]=Screen('Flip',Env.MainWindow,[]);
+FileName = ['ExptData\EXP3_',num2str(DATA.participantNum),'.mat'];
+save(FileName)
+ExcelFile = ['ExptData\EXP3\combined\myBehaviouralDataP', num2str(DATA.participantNum), '_B', num2str(blocks),'_Combined', '.xlsx'];
+
+if isfile(ExcelFile)==1
+    ExcelFile = ['ExptData\EXP3\combined\myBehaviouralDataP', num2str(DATA.participantNum),'_B',num2str(blocks),'_Combined','DOUBLECHANGEPNUM', '.xlsx'];
+end
+writetable(struct2table(OutputData), ExcelFile);
+
+%  my_eyetracker.stop_gaze_data();
+%trigger
+KbWait([],2)
+end
