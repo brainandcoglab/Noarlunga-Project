@@ -37,7 +37,13 @@ codegen/
 octave-workspace
 
 #Windows System Files
-*.db
+*Thumbs.db
+
+#DataFolder
+ExptData/
+
+
+
 # End of https://www.toptal.com/developers/gitignore/api/matlab
 
 # oren sometimes saves a large file with this name. Ignore it. 

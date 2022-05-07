@@ -28,7 +28,7 @@ RecognitionInstructions = ['You are about to be shown another list of words. '..
     'Please indicate whether you have seen this word before in the previous list by selecting old word' ...
     ', or if you have not seen this word in the previous list select new word. '...
     'For each selection, please give a confidence rating on the scale, ranging from 50% (complete guess) to 100% (definitely old/new).'];
-BreakQuote ='Have a Break, have a kitkat';
+BreakQuote ='Please take a short break, when you are ready to continue, press ENTER';
 WordPresentationTime =1.7;
 nWordPresentationFrames =WordPresentationTime/DATA.FlipInterval;
 BackInterval = 0.3;
@@ -56,7 +56,7 @@ switch phases
                 JitterinSecs= DATA.ExperimentThree(phases).Phase(blocks).Blocks(EncodingPhase).JitterAlphabet/1000;
                 nFixFrames = ceil(JitterinSecs/DATA.FlipInterval);
                 for fixpresentation = 1:nFixFrames
-                    Screen('DrawTextures',Env.MainWindow,12);
+                    Screen('DrawTextures',Env.MainWindow,Env.FixCrossTexture);
                     Screen('DrawingFinished',Env.MainWindow);
                     ScreenFlipTime = FlipTime+(DATA.WaitFrameInput-0.5)*DATA.FlipInterval;
                     FlipTime=  Screen('Flip',Env.MainWindow,ScreenFlipTime);
@@ -77,7 +77,7 @@ switch phases
 
                 end
             end
-            Screen('TextSize', Env.MainWindow, 12); %  need to reset pen size after.
+             Screen('TextSize', Env.MainWindow, 30); %  need to reset pen size after.
             DrawFormattedText(Env.MainWindow,sprintf('%s',BreakQuote),'center','center');
             Screen('DrawingFinished',Env.MainWindow);
             ScreenFlipTime = FlipTime+(DATA.WaitFrameInput-0.5)*DATA.FlipInterval;
@@ -116,7 +116,7 @@ switch phases
                 end
                 nFixFrames = ceil(JitterinSecs/DATA.FlipInterval);
                 for fixpresentation = 1:nFixFrames
-                    Screen('DrawTextures',Env.MainWindow,12);
+                    Screen('DrawTextures',Env.MainWindow,Env.FixCrossTexture);
                     Screen('DrawingFinished',Env.MainWindow);
                     ScreenFlipTime = FlipTime+(DATA.WaitFrameInput-0.5)*DATA.FlipInterval;
                     FlipTime=  Screen('Flip',Env.MainWindow,ScreenFlipTime);
@@ -259,7 +259,7 @@ switch phases
 
                 end
             end
-            Screen('TextSize', Env.MainWindow, 16); %  need to reset pen size after.
+            Screen('TextSize', Env.MainWindow, 30); %  need to reset pen size after.
             DrawFormattedText(Env.MainWindow,sprintf('%s',BreakQuote),'center','center');
             Screen('DrawingFinished',Env.MainWindow);
             ScreenFlipTime = FlipTime+(DATA.WaitFrameInput-0.5)*DATA.FlipInterval;
@@ -270,5 +270,6 @@ switch phases
         end
 
 end
+
 end
 %end

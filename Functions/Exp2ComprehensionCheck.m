@@ -1,6 +1,6 @@
 %Written by Tess Barich 2022
 function Exp2ComprehensionCheck(window,window2,PracticeColourA,PracticeColourStrA,BoxColour,PracticeColourB,PracticeColourStrB,Question1,Question2,Question3,ResponseOpts1,ResponseOpts2,PracticeInstructs,ResponseBoxColour)
-global Env DATA ResponseBoxCoords4 QuestionQuote ConfidenceQuote LowAnchor HighAnchor LineLength LineDivide
+global Env DATA ResponseBoxCoords4 QuestionQuote ConfidenceQuote LowAnchor HighAnchor LineLength LineDivide ResponseBoxCoords1
 intertrialinterval =0.5;
 blocks =1;
 nMaxAttempts=26;
@@ -17,17 +17,25 @@ PracticeEndText =["The practice trial is complete. There will now follow four se
 
 Xposi(1:height(ResponseOpts2),1)=Env.ScreenInfo.Centre(1);
 Yposi=zeros([height(ResponseOpts2),1]);
+Yposi2=zeros([height(ResponseOpts2),1]);
 for NumofQs =1:2
     [~,TextYPos] =DrawFormattedText(Env.OffScreenWindow,sprintf('%s',Question1),'center',Env.ExperimentTwoPractice.MinMaxXY(4,1)+40);
+        [~,TextYPos2] =DrawFormattedText(Env.OffScreenWindow,sprintf('%s',Question1),'center',Env.ExperimentTwo.MinMaxXY(4,1)+40);
+
     addY=70;
     for NumofResponses =1: height(ResponseOpts2)
         Yposi(NumofResponses)= TextYPos+addY;
+                Yposi2(NumofResponses)= TextYPos2+addY;
+
+        
         addY=addY+110;
     end
-    [ResponseBoxCoords1,Env.ExperimentTwoPractice.ResponseOne(1),Env.ExperimentTwoPractice.ResponseOne(2)]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,2,[ResponseOpts1],ResponseBoxColour,3,[Xposi],[Yposi],400,100,12,16);
+        %[ResponseBoxCoords1,Env.ExperimentTwoPractice.ResponseOne(1),Env.ExperimentTwoPractice.ResponseOne(2)]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,2,[ResponseOpts1],ResponseBoxColour,3,[Xposi],[Yposi],400,100,12,16);
+end
+    [ResponseBoxCoords1,Env.ExperimentTwoPractice.ResponseOne(1),Env.ExperimentTwoPractice.ResponseOne(2)]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,2,[ResponseOpts1],ResponseBoxColour,3,[Xposi],[Yposi2],400,100,12,16);
     [ResponseBoxCoords2,Env.ExperimentTwoPractice.ResponseTwo]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,5,[ResponseOpts2],ResponseBoxColour,3,[Xposi],[Yposi],400,100,30,16);
 
-end
+%end
 CounterPracPres = randperm(2)';
 PracticeSequence(:,CounterPracPres(1)) = [{'A'};{'A'};{'A'};{'B'};{'A'};{'A'};{'A'};{'A'};{'A'};{'B'};{'A'};{'A'};{'A'};{'B'};{'A'};{'A'};{'A'};{'A'};{'A'};{'B'};{'A'};{'A'};{'A'};{'B'};{'A'}];
 PracticeSequence(:,CounterPracPres(2)) = [{'B'};{'B'};{'B'};{'A'};{'B'};{'B'};{'B'};{'B'};{'B'};{'A'};{'B'};{'B'};{'B'};{'A'};{'B'};{'B'};{'B'};{'B'};{'B'};{'A'};{'B'};{'B'};{'B'};{'A'};{'B'}];
@@ -315,7 +323,7 @@ for blocks =1:1
         TranslateCorrectColour(TranslateCorrectColourBAnswerIdx(:,PracticeTrials),PracticeTrials) =AnswerQuote2;
         DATA.ExperimentTwoPractice(blocks).Block(PracticeTrials).CorrectResponseColour = TranslateCorrectColourBoxAnswer(PracticeTrials,blocks);
         DATA.ExperimentTwoPractice(blocks).Block(PracticeTrials).CorrectResponseBox = TranslateCorrectColour(blocks,PracticeTrials);
-        DATA.ExperimentTwoPractice(blocks).Block(PracticeTrials).TrialSequence =PracticeSequence(:,PracticeTrials);
+        DATA.ExperimentTwoPractice(blocks).Sequence(PracticeTrials).TrialSequence =PracticeSequence(:,PracticeTrials);
         DATA.ExperimentTwoPractice(blocks).Block(PracticeTrials).NumBoxtoDecision = 0;
         Response=1;
         LodgeAResponse =0;

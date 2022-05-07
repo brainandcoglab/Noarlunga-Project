@@ -1,6 +1,6 @@
 %Written by Tess Barich 2022
 function Exp1ComprehensionCheck(Directory,window,window2,PracticeColourA,PracticeColourStrA,PracticeColourB,PracticeColourStrB,MainColourNumber,SecondaryColour,experimentStr,Question1,Question2,ResponseOpts1,ResponseOpts2,PracticeInstructs,ResponseBoxColour)
-global Env DATA Jar Bead ResponseBoxCoords BeadSize QuestionQuote1 QuestionQuote2 ConfidenceQuote LowAnchor HighAnchor LineLength LineDivide
+global Env DATA Jar Bead ResponseBoxCoords BeadSize QuestionQuote1 QuestionQuote2 ConfidenceQuote LowAnchor HighAnchor LineLength LineDivide ResponseBoxCoords1
 intertrialinterval =0.5;
 blocks =1;
 incorrecttext = "Your answer is INCORRECT, please press ENTER to try again.";
@@ -21,10 +21,11 @@ for NumofQs =1:2
         Yposi(NumofResponses)= TextYPos+addY;
         addY=addY+110;
     end
+end
     [ResponseBoxCoords1,Env.ExperimentOnePractice.ResponseOne(1),Env.ExperimentOnePractice.ResponseOne(2)]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,2,[ResponseOpts1],ResponseBoxColour,3,[Xposi],[Yposi],400,100,12,16);
     [ResponseBoxCoords2,Env.ExperimentOnePractice.ResponseTwo]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,5,[ResponseOpts2],ResponseBoxColour,3,[Xposi],[Yposi],400,100,30,16);
 
-end
+
 CounterPracPres = randperm(2)';
 PracticeSequence(:,CounterPracPres(1)) = [{'A'};{'A'};{'A'};{'B'};{'A'};{'A'};{'A'};{'A'};{'A'};{'B'}];
 PracticeSequence(:,CounterPracPres(2)) =  [{'B'};{'B'};{'B'};{'A'};{'B'};{'B'};{'B'};{'B'};{'B'};{'A'}];
@@ -120,11 +121,20 @@ comprehensionpass=0;
 LodgeAResponse =0;
 displayincorrect =0;
 %trigger
+  DATA.ExperimentOneComprehension(1).ParticipantNum = DATA.participantNum;
+              DATA.ExperimentOneComprehension(1).ParticipantAge = DATA.participantAge;
+              DATA.ExperimentOneComprehension(1).ParticipantGen = DATA.participantGen;
+              DATA.ExperimentOneComprehension(1).ParticipantHan = DATA.participantHan;
+                DATA.ExperimentOneComprehension(2).ParticipantNum = DATA.participantNum;
+              DATA.ExperimentOneComprehension(2).ParticipantAge = DATA.participantAge;
+              DATA.ExperimentOneComprehension(2).ParticipantGen = DATA.participantGen;
+              DATA.ExperimentOneComprehension(2).ParticipantHan = DATA.participantHan;
 while comprehensionpass <3
     [keyIsDown]= KbQueueCheck(Env.MouseInfo{1,1}.index);
     [keyboardDown,~,whichkey]=KbCheck;
     [x,y] = GetMouse(Env.MainWindow);
     DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).FrameIndex =FrameIndex;
+            
 
     switch DATA.useET
         case 0
@@ -201,38 +211,38 @@ while comprehensionpass <3
 
         case (Response ==1 && any(keyIsDown==1) && ismembertol(x,ResponseBoxCoords1(1,1):ResponseBoxCoords1(1,3))&& ismembertol(y,ResponseBoxCoords1(1,2):ResponseBoxCoords1(1,4))&& comprehensionpass==0 );
             DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).Trigger = 113; % Response Given 113 - 1 represents experiment number and 3 represents Response to make decision for each trial in each block
-            DATA.ExperimentOneComprehension(blocks).Block(1).ResponseAnswer="Incorrect";
-            DATA.ExperimentOneComprehension(blocks).Block(1).ResponseRT=GetSecs-start;
+            DATA.ExperimentOneComprehension(1).ResponseAnswer="Incorrect";
+            DATA.ExperimentOneComprehension(1).ResponseRT=GetSecs-start;
             LodgeAResponse =LodgeAResponse+1;
-            DATA.ExperimentOneComprehension(blocks).Block(1).NumIncorrectTries=LodgeAResponse;
+            DATA.ExperimentOneComprehension(1).NumIncorrectTries=LodgeAResponse;
 
             Response = 1; % Yes - which is incorrect, jars dont change
             displayincorrect =1;
             comprehensionpass =0;
         case (Response ==1 && any(keyIsDown==1) && ismembertol(x,ResponseBoxCoords1(2,1):ResponseBoxCoords1(2,3))&& ismembertol(y,ResponseBoxCoords1(2,2):ResponseBoxCoords1(2,4)) && comprehensionpass==0);
             DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).Trigger = 112; % Response Given 12 - 1 represents experiment number and 2 represents choice to see another bead for each trial in each block
-            DATA.ExperimentOneComprehension(blocks).Block(1).ResponseAnswer="Correct";
-            DATA.ExperimentOneComprehension(blocks).Block(1).ResponseRT=GetSecs-start;
+            DATA.ExperimentOneComprehension(1).ResponseAnswer="Correct";
+            DATA.ExperimentOneComprehension(1).ResponseRT=GetSecs-start;
             LodgeAResponse = LodgeAResponse;
-            DATA.ExperimentOneComprehension(blocks).Block(1).NumIncorrectTries=LodgeAResponse;
+            DATA.ExperimentOneComprehension(1).NumIncorrectTries=LodgeAResponse;
             Response =2;
             displayincorrect =0;
             comprehensionpass=1;
         case (Response ==2 && any(keyIsDown==1) && (ismembertol(x,ResponseBoxCoords2(1,4):ResponseBoxCoords2(3,4))&& ~ismembertol(y,ResponseBoxCoords2(2,4):ResponseBoxCoords2(4,4)))&& comprehensionpass==1);
             DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).Trigger = 114; % Response Given 14 - 1 represents experiment number and 4 represents Response of A in each block
-            DATA.ExperimentOneComprehension(blocks).Block(2).ResponseAnswer="Incorrect";
-            DATA.ExperimentOneComprehension(blocks).Block(2).ResponseRT=GetSecs-start;
+            DATA.ExperimentOneComprehension(2).ResponseAnswer="Incorrect";
+            DATA.ExperimentOneComprehension(2).ResponseRT=GetSecs-start;
             LodgeAResponse =LodgeAResponse+1;
-            DATA.ExperimentOneComprehension(blocks).Block(2).NumIncorrectTries=LodgeAResponse-DATA.ExperimentOneComprehension(blocks).Block(1).NumIncorrectTries;
+            DATA.ExperimentOneComprehension(2).NumIncorrectTries=LodgeAResponse-DATA.ExperimentOneComprehension(1).NumIncorrectTries;
             %             Response =2;
             displayincorrect =1;
             comprehensionpass=1;
         case (Response ==2 && any(keyIsDown==1) && ismembertol(x,ResponseBoxCoords2(1,4):ResponseBoxCoords2(3,4))&& ismembertol(y,ResponseBoxCoords2(2,4):ResponseBoxCoords2(4,4))&& comprehensionpass==1);
             DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).Trigger = 115; % Response Given 15 - 1 represents experiment number and 5 represents Response of B for each trial in each block
-            DATA.ExperimentOneComprehension(blocks).Block(2).ResponseAnswer = "Correct";
-            DATA.ExperimentOneComprehension(blocks).Block(2).ResponseRT=GetSecs-start;
+            DATA.ExperimentOneComprehension(2).ResponseAnswer = "Correct";
+            DATA.ExperimentOneComprehension(2).ResponseRT=GetSecs-start;
             LodgeAResponse = LodgeAResponse;
-            DATA.ExperimentOneComprehension(blocks).Block(2).NumIncorrectTries=LodgeAResponse-DATA.ExperimentOneComprehension(blocks).Block(1).NumIncorrectTries;
+            DATA.ExperimentOneComprehension(2).NumIncorrectTries=LodgeAResponse-DATA.ExperimentOneComprehension(1).NumIncorrectTries;
             Response =3;
             displayincorrect =0;
             comprehensionpass=2;
@@ -259,18 +269,41 @@ while comprehensionpass <3
 
 
 end
-
+  if exist('ExptData', 'dir') == 0
+        mkdir('ExptData\EXP1');
+    end
+    if exist('ExptData\EXP1\combined','dir')==0
+        mkdir('ExptData\EXP1\combined');
+    end
+  
+    ExcelFile = ['ExptData\EXP1\myComprehensionDataP', num2str(DATA.participantNum), '_B', num2str(blocks),'_Data', '.xlsx'];
+    if isfile(ExcelFile)==1
+        ExcelFile = ['ExptData\EXP1\myComprehensionDataP', num2str(DATA.participantNum),'_B',num2str(blocks),'_Data','DOUBLECHANGEPNUM', '.xlsx'];
+    end
+    %xlswrite(ExcelFile,stimuli);
+    writetable(struct2table(DATA.ExperimentOneComprehension), ExcelFile);
+%     if exist('OutputData', 'var')==1
+%         OutputData = [OutputData,DATA.ExperimentOneComprehension];
+%     else
+%         OutputData = DATA.DATA.ExperimentOneComprehension;
+%     end
+% 
+%     clear OutputData
 
 
 for blocks =1:1
     for PracticeTrials = 1:width(PracticeSequence) % The things that need to happen on each trial
         clear DispStim LodgeAResponse BreakMeOut Response
         DATA.ExperimentOnePractice(blocks).EyeData(FrameIndex).Trigger = 110; % Trigger Given 10 - 1 represents experiment number and 0 represents start of each trial in each block.
-
+ DATA.ExperimentOnePractice(blocks).Block(PracticeTrials).ParticipantNum = DATA.participantNum;
+               DATA.ExperimentOnePractice(blocks).Block(PracticeTrials).ParticipantAge = DATA.participantAge;
+            DATA.ExperimentOnePractice(blocks).Block(PracticeTrials).ParticipantGen = DATA.participantGen;
+               DATA.ExperimentOnePractice(blocks).Block(PracticeTrials).ParticipantHan = DATA.participantHan;
         DATA.ExperimentOnePractice(blocks).Block(PracticeTrials).CorrectResponseStr = TranslateCorrectJarAnswer(PracticeTrials,blocks);
         DATA.ExperimentOnePractice(blocks).Block(PracticeTrials).CorrectResponse = CounterPracPres(PracticeTrials,blocks);
-        DATA.ExperimentOnePractice(blocks).Block(PracticeTrials).TrialSequence =PracticeSequence(:,PracticeTrials);
+        DATA.ExperimentOnePractice(blocks).Sequences(PracticeTrials).TrialSequence =PracticeSequence(:,PracticeTrials);
         DATA.ExperimentOnePractice(blocks).Block(PracticeTrials).NumBeadstoDecision = 1;
+             
 
         WaitSecs(intertrialinterval);
         [FlipTime,~,EndFlip]=Screen('Flip',Env.MainWindow,[]);
@@ -452,7 +485,32 @@ for blocks =1:1
         end
 
     end
+    %Create file to output by appending to stimuli any required columns
+    %e.g. Participant# and Block# possibly also what the targets and
+    %distractors were.
+    % Then save that combined table
+    
+    %% First, write a Matlab file filled with all relevant DATA.
+    if exist('ExptData', 'dir') == 0
+        mkdir('ExptData\EXP1');
+    end
+    if exist('ExptData\EXP1\combined','dir')==0
+        mkdir('ExptData\EXP1\combined');
+    end
+  
+    ExcelFile = ['ExptData\EXP1\myPracticeDataP', num2str(DATA.participantNum), '_B', num2str(blocks),'_Data', '.xlsx'];
+    if isfile(ExcelFile)==1
+        ExcelFile = ['ExptData\EXP1\myPracticeDataP', num2str(DATA.participantNum),'_B',num2str(blocks),'_Data','DOUBLECHANGEPNUM', '.xlsx'];
+    end
+    %xlswrite(ExcelFile,stimuli);
+    writetable(struct2table(DATA.ExperimentOnePractice(blocks).Block), ExcelFile);
+%     if exist('OutputData', 'var')==1
+%         OutputData = [OutputData,DATA.ExperimentOnePractice(blocks).Block];
+%     else
+%         OutputData = DATA.ExperimentOnePractice(blocks).Block;
+%     end
 end
+
 MoveOn=0;
 while MoveOn~=1
     [keyboardDown,~,whichkey]=KbCheck;

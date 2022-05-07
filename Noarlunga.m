@@ -288,6 +288,7 @@ Triggers.Test.EndTrial = 177;
 
 Env.Triggers = Triggers;  clear Triggers;
 
+Env.AttentionCheckTex=DrawASmile(Env.Colours.White,Env.MainWindow,Env.OffScreenWindow);
 
 
 %% Run the tasks (and output partial info/data as you go).
