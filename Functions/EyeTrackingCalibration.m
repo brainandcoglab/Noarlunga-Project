@@ -1,46 +1,47 @@
 function EyeTrackingCalibration(tol,buff)
 %% Modified by Tess Barich 2021. Loosely Based on Tobii Pro Research Package
 %%Eye Tracking Set Up
-global  Env Calib %Declare the globals used in this function.
+global  Env DATA 
+global MyEyeTracker sp TimeStamps OverallGazeData calibrationStart TobiiOperations failed_licenses
+%Declare the globals used in this function.
 %% Eyetracking Initiation
 ETFunctions =[Env.Loc_Functions filesep 'ETFunctions']; %Declare where the functions folder for ET is.
 addpath(genpath(ETFunctions));% Add the ET functions to the current path
 
-Calib.TobiiOperations = EyeTrackingOperations(); %Initialise ET operations function
-Calib.FindMyEyetracker = []; %Find all eye trackers currently connected to the device
-while isempty(Calib.FindMyEyetracker)
-Calib.FindMyEyetracker = Calib.TobiiOperations.find_all_eyetrackers(); %Find all eye trackers currently connected to the device
+TobiiOperations = EyeTrackingOperations(); %Initialise ET operations function
+FindMyEyetracker = []; %Find all eye trackers currently connected to the device
+while isempty(FindMyEyetracker)
+FindMyEyetracker = TobiiOperations.find_all_eyetrackers(); %Find all eye trackers currently connected to the device
 end 
-Calib.MyEyetracker=Calib.FindMyEyetracker(1); %Use the first ET on the list
-Calib.MyEyetrackerAddress = Calib.MyEyetracker.Address; %Save the ET's address to calib global
-Calib.FilePath = [[ETFunctions filesep 'Licenses' filesep] getmatchedfile([ETFunctions filesep 'Licenses' filesep],Calib.MyEyetracker.SerialNumber)]; %Apply the most recently updated file as the license
-fileID = fopen(Calib.FilePath, 'r'); %create file ID for the License file
-Calib.InputLicense = LicenseKey(fread(fileID));
+MyEyeTracker=FindMyEyetracker(1); %Use the first ET on the list
+MyEyetrackerAddress = MyEyeTracker.Address; %Save the ET's address to calib global
+FilePath = [[ETFunctions filesep 'Licenses' filesep] getmatchedfile([ETFunctions filesep 'Licenses' filesep],MyEyeTracker.SerialNumber)]; %Apply the most recently updated file as the license
+fileID = fopen(FilePath, 'r'); %create file ID for the License file
+InputLicense = LicenseKey(fread(fileID));
 fclose(fileID);
-Env.ET_licenseFile =Calib.FilePath; % Declare ET License file path to global environment variable.
-Env.ETAddress =Calib.MyEyetrackerAddress; %Decalre ET Address to global environment varible.
-Calib.failed_licenses = Calib.MyEyetracker.apply_licenses(Calib.InputLicense);% Returns an array with the licenses that were not successfully applied. Should return empty if all the licenses were correctly applied.
+Env.ET_licenseFile =FilePath; % Declare ET License file path to global environment variable.
+Env.ETAddress =MyEyetrackerAddress; %Decalre ET Address to global environment varible.
+failed_licenses = MyEyeTracker.apply_licenses(InputLicense);% Returns an array with the licenses that were not successfully applied. Should return empty if all the licenses were correctly applied.
 
 %% Calibration of eyetracking
 
 visualangleforgaze = tol; %pass through the inputted variables from Noarlunga.m
 visualangleforgazebuffer =buff; %pass through the inputted variables from Noarlunga.m
-
 %% Track status
 
 dotSizePix = 20;% Dot size in pixels
-Calib.MyEyetracker.get_gaze_data();% Start collecting data
+OverallGazeData=MyEyeTracker.get_gaze_data();% Start collecting data
 % The subsequent calls return the current values in the stream buffer.
-Screen ('OpenWindow', Env.MainWindow,Env.Colours.LightGrey);%Open a window using psychimaging and colour it light grey
+%Screen ('OpenWindow', Env.MainWindow,Env.Colours.LightGrey);%Open a window using psychimaging and colour it light grey
 Screen('TextSize', Env.MainWindow, 20); %Set text size to 20pt.
 
 while ~KbCheck %Show the following display until any key is pressed. 
     DrawFormattedText(Env.MainWindow, 'When correctly positioned press any key to start the calibration.', 'center', Env.ScreenInfo.height * 0.1, Env.Colours.White); % Draw the text to the screen
     distance = []; % Assign empty variable for distance from eyetracker
-    Calib.gaze_data = MyEyetracker.get_gaze_data(); %This is the subsequent call to the eye tracker, will give data between the last call and now. 
-   
-    if ~isempty(Calib.gaze_data) % If gaze data isnt empty 
-        last_gaze = Calib.gaze_data(end); %declare last gaze variable
+   gaze_data = MyEyeTracker.get_gaze_data(); %This is the subsequent call to the eye tracker, will give data between the last call and now. 
+  % OverallGazeData(end+1)=gaze_data;
+    if ~isempty(gaze_data) % If gaze data isnt empty 
+        last_gaze = gaze_data(end); %declare last gaze variable
         validityColor = Env.Colours.Red; %Set validity colour for empty gaze data to red. 
         % Check if user has both eyes inside a reasonable tracking area.
        
@@ -80,17 +81,17 @@ while ~KbCheck %Show the following display until any key is pressed.
         pause(0.05);
     end
     
-    DrawFormattedText(Env.MainWindow, sprintf('Current distance to the eye tracker: %.2f cm.',mean(distance)), 'center', Env.Info.height * 0.85, Env.Colours.White); % Draw to the screen
+    DrawFormattedText(Env.MainWindow, sprintf('Current distance to the eye tracker: %.2f cm.',mean(distance)), 'center', Env.ScreenInfo.height * 0.85, Env.Colours.White); % Draw to the screen
     Screen('Flip', Env.MainWindow);% Flip to the screen. This command basically draws all of our previous
 end
-Calib.MyEyetracker.stop_gaze_data();
+MyEyeTracker.stop_gaze_data();
 %% Calibration
 
 spaceKey = KbName('Space'); % Declare space key to use for later
 RKey = KbName('R'); % Declare R key to use for Recalibration Command
 enterKey = KbName('Return'); % Declare enter key to for Continue command
 dotSizePix = 20; % Set dot size to 20 pixels
-mmdotSizePix = dotSizePix/ScreenInfo.pixelpermm; %Calculate dot size in mms
+mmdotSizePix = dotSizePix/Env.ScreenInfo.pixelpermm; %Calculate dot size in mms
 distancemm = distance*10; % Calculate distance in mm
 bufferzone = tol+buff; % visual angle buffer wanted
 dotColor = [[Env.Colours.Red];[Env.Colours.White]];%Set dot colours to Red and White
@@ -112,7 +113,7 @@ yc = 0.5;  % vertical center
 bb = 0.9;  % bottom bound
 
 points_to_calibrate = [[lb,ub];[rb,ub];[xc,yc];[lb,bb];[rb,bb]]; % Create 5x2 matrix with the calibration points. 
-calibrationStart = ScreenBasedCalibration(Calib.MyEyetracker);% Create calibration object
+calibrationStart = ScreenBasedCalibration(MyEyeTracker);% Create calibration object
 calibrating = true; % Declare variable for while loop below.
 
 while calibrating
@@ -139,13 +140,13 @@ while calibrating
     points = calibration_result.CalibrationPoints;   % Calibration Result
 
     for i=1:length(points)
-        Screen('DrawDots', Env.MainWindow, points(i).PositionOnDisplayArea.*screen_pixels, dotSizePix*0.5, dotColor(2,:), [], 2);
+        Screen('DrawDots', Env.MainWindow, points(i).PositionOnDisplayArea.*Env.ScreenInfo.Resolution, dotSizePix*0.5, dotColor(2,:), [], 2);
         for j=1:length(points(i).RightEye)
             if points(i).LeftEye(j).Validity == CalibrationEyeValidity.ValidAndUsed
-                Screen('DrawDots', Env.MainWindow, points(i).LeftEye(j).PositionOnDisplayArea.*screen_pixels, dotSizePix*0.3, leftColor, [], 2);
-                Screen('DrawLines', Env.MainWindow, ([points(i).LeftEye(j).PositionOnDisplayArea; points(i).PositionOnDisplayArea].*screen_pixels)', 2, leftColor, [0 0], 2);
-                VisualAngle(i).LeftEye(j).PointVisAng = visAngle(mmdotSizePix,distancemm(1));
-                [my_desiredSize(i).LeftEye(j).PointPix,my_desiredSize(i).LeftEye(j).PointMM] = desiredSize((VisualAngle(i).LeftEye(j).PointPos+bufferzone),distancemm(1),ScreenInfo.pixelpermm);
+                Screen('DrawDots', Env.MainWindow, points(i).LeftEye(j).PositionOnDisplayArea.*Env.ScreenInfo.Resolution, dotSizePix*0.3, leftColor, [], 2);
+                Screen('DrawLines', Env.MainWindow, ([points(i).LeftEye(j).PositionOnDisplayArea; points(i).PositionOnDisplayArea].*Env.ScreenInfo.Resolution)', 2, leftColor, [0 0], 2);
+                VisualAngle(i).LeftEye(j).PointPos = visAngle(mmdotSizePix,distancemm(1));
+                [my_desiredSize(i).LeftEye(j).PointPix,my_desiredSize(i).LeftEye(j).PointMM] = desiredSize((VisualAngle(i).LeftEye(j).PointPos+bufferzone),distancemm(1),Env.ScreenInfo.pixelpermm);
                 tolL =    (my_desiredSize(i).LeftEye(j).PointPix)';
                 lefteyedistpix(i) = sqrt(((calibration_result.CalibrationPoints(i).LeftEye(j).PositionOnDisplayArea(1)*Env.ScreenInfo.width(1)) -(points(1,i).PositionOnDisplayArea(1)*Env.ScreenInfo.width(1)))^2 + ((calibration_result.CalibrationPoints(i).LeftEye(j).PositionOnDisplayArea(2)*Env.ScreenInfo.height(1)) -(points(1,i).PositionOnDisplayArea(2)*Env.ScreenInfo.height(1)))^2);% circle tolerance
                 if lefteyedistpix<= tolL
@@ -155,12 +156,12 @@ while calibrating
                 end
             end
             if points(i).RightEye(j).Validity == CalibrationEyeValidity.ValidAndUsed
-                Screen('DrawDots', Env.MainWindow, points(i).RightEye(j).PositionOnDisplayArea.*screen_pixels, dotSizePix*0.3, rightColor, [], 2);
-                Screen('DrawLines', Env.MainWindow, ([points(i).RightEye(j).PositionOnDisplayArea; points(i).PositionOnDisplayArea].*screen_pixels)', 2, rightColor, [0 0], 2);
-                VisualAngle(i).RightEye(j).PointVisAng = visAngle(mmdotSizePix,distancemm(2));
-                [my_desiredSize(i).RightEye(j).PointPix,my_desiredSize(i).RightEye(j).PointMM] = desiredSize((VisualAngle(i).RightEye(j).PointPos+bufferzone),distancemm(2),ScreenInfo.pixelpermm);
+                Screen('DrawDots', Env.MainWindow, points(i).RightEye(j).PositionOnDisplayArea.*Env.ScreenInfo.Resolution, dotSizePix*0.3, rightColor, [], 2);
+                Screen('DrawLines', Env.MainWindow, ([points(i).RightEye(j).PositionOnDisplayArea; points(i).PositionOnDisplayArea].*Env.ScreenInfo.Resolution)', 2, rightColor, [0 0], 2);
+                VisualAngle(i).RightEye(j).PointPos = visAngle(mmdotSizePix,distancemm(2));
+                [my_desiredSize(i).RightEye(j).PointPix,my_desiredSize(i).RightEye(j).PointMM] = desiredSize((VisualAngle(i).RightEye(j).PointPos+bufferzone),distancemm(2),Env.ScreenInfo.pixelpermm);
                 tolR =    (my_desiredSize(i).RightEye(j).PointPix);
-                tol(:,i)= [tolL;tolR];
+                tolerance(:,i)= [tolL;tolR];
                 righteyedistpix(i) = sqrt(((calibration_result.CalibrationPoints(i).RightEye(j).PositionOnDisplayArea(1)*Env.ScreenInfo.width(1)) -(points(1,i).PositionOnDisplayArea(1)*Env.ScreenInfo.width(1)))^2 + ((calibration_result.CalibrationPoints(i).RightEye(j).PositionOnDisplayArea(2)*Env.ScreenInfo.height(1)) -(points(1,i).PositionOnDisplayArea(2)*Env.ScreenInfo.height(1)))^2);% circle tolerance
                 if righteyedistpix<= tolR
                     righteyetolerant(i) = 1;
@@ -170,7 +171,8 @@ while calibrating
             end
         end
     end
-
+switch true 
+    case (length(lefteyetolerant)==5 && length(righteyetolerant)==5)
     if sum(lefteyetolerant + righteyetolerant) ~= 10 % THIS IS USED FOR CIRCLE TOLERANCE CALCS
         DrawFormattedText(Env.MainWindow, 'Calibration failed... please try again....Press any key', 'center', Env.ScreenInfo.height * 0.95, Env.Colours.White);
         Screen('Flip', Env.MainWindow);
@@ -195,7 +197,14 @@ while calibrating
             end
         end
     end
+    otherwise 
+               DrawFormattedText(Env.MainWindow, 'Calibration failed... please try again....Press any key', 'center', Env.ScreenInfo.height * 0.95, Env.Colours.White);
+        Screen('Flip', Env.MainWindow);
+        KbWait([],2);
+        calibrating = true;
+
 end
-Screen('Close', Env.MainWindow);
+end 
+%Screen('Close', Env.MainWindow);
 end
 %% END CALIBRATION

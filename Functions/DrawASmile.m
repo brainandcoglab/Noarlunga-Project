@@ -1,3 +1,4 @@
+%Written By Tess Barich 2022
 function [AttentionCheckStim] = DrawASmile(colour,window,window2)
 global Env 
 EyeCoords = [890,905;460,460];

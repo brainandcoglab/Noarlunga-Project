@@ -5,16 +5,25 @@
 % Goal: overarching main script that captures demographics, organizes
 % access to the individual experimental tasks, and saves data in format
 % that we can readily analyze.
+% structures to pass general information between sub-experiments.
+
 
 % initialize workspace
-clear all;
+% clear all;
+% close all;
+% sca
+% AssertOpenGL;
+%Clear the workspace and the screen
+sca;
 close all;
-sca
+
+clear global Env DATA
+clearvars;
 AssertOpenGL;
 while KbCheck; end
 
-% structures to pass general information between sub-experiments.
-global DATA Env Calib Pointer  colour  ResponseBoxCoords2
+global DATA Env Pointer  colour  ResponseBoxCoords2
+global MyEyeTracker sp TimeStamps OverallGazeData calibrationStart TobiiOperations failed_licenses
 
 % automatically switch pwd to location of current file, even if user
 % declared otherwise (accidentally). (Lots of calls to pwd below.)
@@ -23,6 +32,7 @@ cd(pathstr);
 
 
 ResponseBoxCoords2=[];
+TimeStamps=[];
 %% Capture demographic data
 inputError = 1;
 while inputError == 1
@@ -159,6 +169,7 @@ Env.Loc_Stimuli = [pwd filesep 'Stimuli'];
 addpath(Env.Loc_Functions);
 addpath(Env.Loc_Stimuli);
 colour =[];
+
 Env.Stimuli.Name ='Prefill';
 
 % ET license file (will need to change if we use a different device). Maybe
@@ -170,11 +181,22 @@ Env.Stimuli.Name ='Prefill';
 % Env.ETAddress = 'tobii-ttp://IS404-100107012554';
 
 % experimental control variables
-DATA.useET = 0; % 0 = no ET, 1 = ET.
+DATA.useET = 1; % 0 = no ET, 1 = ET.
 DATA.ETTol= 2; %2 degrees visual angle tolerance for calibrations
 DATA.ETBuf =1; % 1 degrees addition buffer for ET tolerance
 DATA.useEEG = 0; % 0 = no EEG, 1 = EEG.
 DATA.debugging = 0;
+
+if DATA.useET==1
+    DATA.usedefaultETSettings=input('Would you like to keep the default settings (2 degrees tolerance, 1 degree bufferzone)? Y/N--->'     , 's');
+    if contains(DATA.usedefaultETSettings,'Y','IgnoreCase', true)
+        DATA.ETTol= DATA.ETTol;
+        DATA.ETBuf = DATA.ETBuf;
+    else
+        DATA.ETTol = input('What visual angle tolerance would you like? [1,2,3 etc]--->'   );
+        DATA.ETBuf = input('What visual angle additional buffer would you like? [1,2,3 etc] --->'   );
+    end
+end
 
 % soime stuff for psychtoolbox can be done here too. Definitely going to
 % add a bit more here to ensure the ET calibration works properly.
@@ -204,13 +226,13 @@ pause(2)
 
 %% PsychtoolBox setup
 PsychDefaultSetup(2);
- PsychImaging('PrepareConfiguration');
-  PsychImaging('AddTask', 'General', 'UseFastOffscreenWindows');
+% PsychImaging('PrepareConfiguration');
+% PsychImaging('AddTask', 'General', 'UseFastOffscreenWindows');
 Screen ('Preference', 'SkipSyncTests', 2);% change this to 0 when actually running experiments
 Screen ('Preference', 'DefaultFontSize');% change this to 0 when actually running experiments
 Pointer =1;
 
-ScreenNumber = max(Screen('Screens')); % Selects the screen to display. Sole display = 0.
+ScreenNumber = 2;%max(Screen('Screens')); % Selects the screen to display. Sole display = 0.
 [Env.MainWindow, Env.windowRect] =Screen ('OpenWindow', ScreenNumber,Env.Colours.LightGrey,[],[],[],[],[],4);%Open a window using psychimaging and colour it light grey
 [Env.OffScreenWindow]= Screen('OpenOffscreenWindow',Env.MainWindow,Env.Colours.Alpha);
 Env.ScreenInfo= Screen('Resolution', Env.MainWindow); % Get some screen info including resolution, pixel size and hz.
@@ -241,50 +263,76 @@ Screen('BlendFunction', Env.OffScreenWindow, 'GL_SRC_ALPHA', 'GL_ONE_MINUS_SRC_A
 % Triggers for EEG (and/or ET).
 % Just putting some token values in here for now. Limited of 20:256.
 
-% Practice
+%   Comprehension - Exp 1 and 2
+Triggers.Comprehension.InstructionsStart=66;
+
+Triggers.Comprehension.InstructionsEnd=67;
+Triggers.Comprehension.Start =68;
+Triggers.Comprehension.CorrectResponse =69;
+Triggers.Comprehension.IncorrectResponse =70;
+Triggers.Comprehension.DisplayIncorrectEnd =71;
+Triggers.Comprehension.End=72;
+
+%Practice - Exp 1 and 2
 Triggers.Practice.StartBlock = 81;
 Triggers.Practice.EndBlock = 82;
-%
-Triggers.Practice.StartTrial = 91;
-Triggers.Practice.FriendTrial = 92;
-Triggers.Practice.FoeTrial = 93;
-Triggers.Practice.NeitherTrial = 94;
-Triggers.Practice.Response = 95;
-Triggers.Practice.TimeOut = 96;
-Triggers.Practice.EndTrial = 97;
-% Pretraining
-Triggers.PreTraining.StartBlock = 101;
-Triggers.PreTraining.EndBlock = 102;
-%
-Triggers.PreTraining.StartTrial = 111;
-Triggers.PreTraining.FriendTrial = 112;
-Triggers.PreTraining.FoeTrial = 113;
-Triggers.PreTraining.NeitherTrial = 114;
-Triggers.PreTraining.Response = 115;
-Triggers.PreTraining.TimeOut = 116;
-Triggers.PreTraining.EndTrial = 117;
-% Training
-Triggers.Training.StartBlock = 131;
-Triggers.Training.EndBlock = 132;
-%
-Triggers.Training.StartTrial = 141;
-Triggers.Training.FriendTrial = 142;
-Triggers.Training.FoeTrial = 143;
-Triggers.Training.NeitherTrial = 144;
-Triggers.Training.Response = 145;
-Triggers.Training.TimeOut = 146;
-Triggers.Training.EndTrial = 147;
-% Test
-Triggers.Test.StartBlock = 161;
-Triggers.Test.EndBlock = 162;
-%
-Triggers.Test.StartTrial = 171;
-Triggers.Test.FriendTrial = 172;
-Triggers.Test.FoeTrial = 173;
-Triggers.Test.NeitherTrial = 174;
-Triggers.Test.Response = 175;
-Triggers.Test.TimeOut = 176;
-Triggers.Test.EndTrial = 177;
+Triggers.Practice.StartTrial = 83;
+Triggers.Practice.ResponseYes = 84;
+Triggers.Practice.ResponseSeeMore = 85;
+Triggers.Practice.ResponseMaxNumReached= 86;
+Triggers.Practice.ResponseA = 87;
+Triggers.Practice.ResponseB = 88;
+Triggers.Practice.ConfidenceResponse = 89;
+Triggers.Practice.EndTrial = 90;
+%Attention Check - Exp 1 and 2
+Triggers.Attention.Start =74;
+Triggers.Attention.StartSmile =75;
+Triggers.Attention.StartQuestions=76;
+Triggers.Attention.YesNoticedResponse =77;
+Triggers.Attention.NoNoticedResponse =78;
+Triggers.Attention.EndFreeResponse =79;
+Triggers.Attention.End=80;
+
+%% Experiments 1 and 2
+Triggers.Exp.Start = 158;
+Triggers.Exp.StartBlock = 159;
+Triggers.Exp.EndBlock = 160;
+Triggers.Exp.BlockStartText=161;
+Triggers.Exp.BlockEndText=162;
+Triggers.Exp.StartTrial = 163;
+Triggers.Exp.ResponseYes  = 164;
+Triggers.Exp.ResponseSeeMore = 165;
+Triggers.Exp.ResponseMaxNumReached= 166;
+Triggers.Exp.ResponseA = 167;
+Triggers.Exp.ResponseB = 168;
+Triggers.Exp.ConfidenceResponse = 169;
+Triggers.Exp.EndTrial = 170;
+Triggers.Exp.End =171;
+
+%% Experiment 3
+Triggers.Exp3.Start = 179;
+Triggers.Exp3.End = 180;
+Triggers.Exp3.StartEncoding=181;
+Triggers.Exp3.StartBlock = 182;
+Triggers.Exp3.JitterStart = 183;
+Triggers.Exp3.JitterEnd = 184;
+Triggers.Exp3.WordShownStart = 185;
+Triggers.Exp3.WordShownEnd = 186;
+Triggers.Exp3.BackBufferStart =187;
+Triggers.Exp3.BackBufferEnd =188;
+Triggers.Exp3.EndBlock = 189;
+Triggers.Exp3.EndEncoding=190;
+Triggers.Exp3.StartRecognition=191;
+Triggers.Exp3.StartTrial = 192;
+Triggers.Exp3.ResponseOldTrial  = 193;
+Triggers.Exp3.ResponseNewTrial = 194;
+Triggers.Exp3.ConfidenceResponse = 195;
+Triggers.Exp3.EndTrial = 196;
+Triggers.Exp3.EndRecognition=187;
+
+Triggers.Exp3.Break=200;
+
+
 
 Env.Triggers = Triggers;  clear Triggers;
 
@@ -292,19 +340,21 @@ Env.AttentionCheckTex=DrawASmile(Env.Colours.White,Env.MainWindow,Env.OffScreenW
 
 
 %% Run the tasks (and output partial info/data as you go).
+Temp = struct;
+
 % Eye Tracking Calibration
 if DATA.useET ==1% 0 = no ET, 1 = ET.
-    DATA.usedefaultETSettings=input('Would you like to keep the default settings (2 degrees tolerance, 1 degree bufferzone)? Y/N--->'     , 's');
-    if contains(DATA.usedefaultETSettings,'Y','IgnoreCase', true)
-        DATA.ETTol= DATA.ETTol;
-        DATA.ETBuf = DATA.ETBuf;
-    else
-        DATA.ETTol = input('What visual angle tolerance would you like? [1,2,3 etc]--->'   );
-        DATA.ETBuf = input('What visual angle additional buffer would you like? [1,2,3 etc] --->'   );
-    end
+
+    OverallGazeData= struct;
 
     EyeTrackingCalibration(DATA.ETTol,DATA.ETBuf);
+    Temp=MyEyeTracker.get_gaze_data();
+end
 
+if DATA.useEEG==1
+    % set up the serial port to start sending commands
+    sp = BioSemiSerialPort(); % open serial port
+    sp.testTriggers; % test pins 1-8
 end
 
 
@@ -346,5 +396,18 @@ end
 
 %% wrap up and clean up.
 sca;
+
+if DATA.useEEG == 1
+    fclose(sp.sp); % the serial port object is actually a property of sp aslo called sp
+end
+
+if DATA.useET == 1
+    OverallGazeData=MyEyeTracker.get_gaze_data;
+    MyEyeTracker.stop_gaze_data();
+end
+
+sca;
+
+%end
 % clear all;
 

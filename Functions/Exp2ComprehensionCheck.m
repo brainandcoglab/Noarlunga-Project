@@ -1,6 +1,9 @@
 %Written by Tess Barich 2022
 function Exp2ComprehensionCheck(window,window2,PracticeColourA,PracticeColourStrA,BoxColour,PracticeColourB,PracticeColourStrB,Question1,Question2,Question3,ResponseOpts1,ResponseOpts2,PracticeInstructs,ResponseBoxColour)
 global Env DATA ResponseBoxCoords4 QuestionQuote ConfidenceQuote LowAnchor HighAnchor LineLength LineDivide ResponseBoxCoords1
+global MyEyeTracker sp TimeStamps OverallGazeData TobiiOperations
+Screen('TextColor',Env.MainWindow,Env.Colours.Black);
+
 intertrialinterval =0.5;
 blocks =1;
 nMaxAttempts=26;
@@ -20,20 +23,20 @@ Yposi=zeros([height(ResponseOpts2),1]);
 Yposi2=zeros([height(ResponseOpts2),1]);
 for NumofQs =1:2
     [~,TextYPos] =DrawFormattedText(Env.OffScreenWindow,sprintf('%s',Question1),'center',Env.ExperimentTwoPractice.MinMaxXY(4,1)+40);
-        [~,TextYPos2] =DrawFormattedText(Env.OffScreenWindow,sprintf('%s',Question1),'center',Env.ExperimentTwo.MinMaxXY(4,1)+40);
+    [~,TextYPos2] =DrawFormattedText(Env.OffScreenWindow,sprintf('%s',Question1),'center',Env.ExperimentTwo.MinMaxXY(4,1)+40);
 
     addY=70;
     for NumofResponses =1: height(ResponseOpts2)
         Yposi(NumofResponses)= TextYPos+addY;
-                Yposi2(NumofResponses)= TextYPos2+addY;
+        Yposi2(NumofResponses)= TextYPos2+addY;
 
-        
+
         addY=addY+110;
     end
-        %[ResponseBoxCoords1,Env.ExperimentTwoPractice.ResponseOne(1),Env.ExperimentTwoPractice.ResponseOne(2)]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,2,[ResponseOpts1],ResponseBoxColour,3,[Xposi],[Yposi],400,100,12,16);
+    %[ResponseBoxCoords1,Env.ExperimentTwoPractice.ResponseOne(1),Env.ExperimentTwoPractice.ResponseOne(2)]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,2,[ResponseOpts1],ResponseBoxColour,3,[Xposi],[Yposi],400,100,12,16);
 end
-    [ResponseBoxCoords1,Env.ExperimentTwoPractice.ResponseOne(1),Env.ExperimentTwoPractice.ResponseOne(2)]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,2,[ResponseOpts1],ResponseBoxColour,3,[Xposi],[Yposi2],400,100,12,16);
-    [ResponseBoxCoords2,Env.ExperimentTwoPractice.ResponseTwo]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,5,[ResponseOpts2],ResponseBoxColour,3,[Xposi],[Yposi],400,100,30,16);
+[ResponseBoxCoords1,Env.ExperimentTwoPractice.ResponseOne(1),Env.ExperimentTwoPractice.ResponseOne(2)]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,2,[ResponseOpts1],ResponseBoxColour,3,[Xposi],[Yposi2],400,100,12,16);
+[ResponseBoxCoords2,Env.ExperimentTwoPractice.ResponseTwo]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,5,[ResponseOpts2],ResponseBoxColour,3,[Xposi],[Yposi],400,100,30,16);
 
 %end
 CounterPracPres = randperm(2)';
@@ -76,59 +79,50 @@ for i = 1:width(change2colourB)
 end
 
 
-if DATA.useET==1
-    FirstPassET = my_eyetracker.get_gaze_data();
-end
 MoveOn=0;
 FrameIndex=1;
 KbQueueCreate(Env.MouseInfo{1,1}.index,[],2);
 KbQueueStart(Env.MouseInfo{1,1}.index);
 start =GetSecs;
+TriggerToSend=Env.Triggers.Comprehension.InstructionsStart;
+
 while MoveOn~=1
     [keyboardDown,~,whichkey]=KbCheck;
-    DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).FrameIndex =FrameIndex;
     %trigger
     DrawFormattedText(Env.MainWindow,sprintf('%s',PracticeInstructs),'center',TextYPos,[],120,[],[],2);
     Screen('FillRect',window,colour1,Env.ExperimentTwoPractice.Coordinates);
 
     Screen('DrawingFinished',window);
 
-    switch DATA.useET
-        case 0
-            DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).SystemTime = GetSecs;
-            DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).OnsetTime =  DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).SystemTime  -start;
-
-        case 1
-            switch true
-                case isempty(CurrentSample)==1
-
-                    DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).TobiiLeftEyePos = FirstPassET(1,end).LeftEye.GazePoint.OnDisplayArea;
-                    DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).TobiiRightEyePos = FirstPassET(1,end).RightEye.GazePoint.OnDisplayArea;
-                    DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).TobiiLeftEyePupil = FirstPassET(1,end).LeftEye.Pupil.Diameter;
-                    DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).TobiiRightEyePupil = FirstPassET(1,end).LeftEye.Pupil.Diameter;
-                    DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).TobiiTime = FirstPassET(1,end).SystemTimeStamp;
-
-
-                case isempty(CurrentSample)==0
-
-                    DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).TobiiLeftEyePos= CurrentSample(1,end).LeftEye.GazePoint.OnDisplayArea;
-                    DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).TobiiRightEyePos  = CurrentSample(1,end).RightEye.GazePoint.OnDisplayArea;
-                    DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).TobiiLeftEyePupil = CurrentSample(1,end).LeftEye.Pupil.Diameter;
-                    DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).TobiiRightEyePupil = CurrentSample(1,end).LeftEye.Pupil.Diameter;
-                    DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).TobiiTime = CurrentSample(1,end).SystemTimeStamp;
-
-
-            end
-            CurrentSample = my_eyetracker.get_gaze_data();
-
-    end
 
     if (keyboardDown ==1 && KbName(whichkey)=="Return")
         MoveOn=1;
-        %trigger
+        TriggerToSend=Env.Triggers.Comprehension.InstructionsEnd;
     end
     [FlipTime,~,EndFlip]=Screen('Flip',Env.MainWindow,[]);
-    DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).FlipTimeStamp=FlipTime;
+    switch DATA.useEEG
+        case 1
+            switch true
+                case FrameIndex==1
+                    sp.sendTrigger(TriggerToSend); % trigger
+                case MoveOn==1
+                    sp.sendTrigger(TriggerToSend); % trigger
+
+            end
+    end
+
+    switch DATA.useET
+        case 1
+            switch true
+                case FrameIndex==1
+                    TimeStamps(end+1,1) =TobiiOperations.get_system_time_stamp;
+                    TimeStamps(end,2)= TriggerToSend;
+                case MoveOn==1
+                    TimeStamps(end+1,1) =TobiiOperations.get_system_time_stamp;
+                    TimeStamps(end,2)= TriggerToSend;
+            end
+    end
+    TriggerToSend=0;
 
     FrameIndex =FrameIndex+1;
 end
@@ -137,47 +131,19 @@ Response =1;
 ResponseHighlighter1 = Env.Colours.Black;
 ResponseHighlighter2 = Env.Colours.Black;
 ResponseHighlighter=ones([width(Env.Colours.Black),height(ResponseOpts2)]);
-%start =GetSecs;
+start =GetSecs;
 blocks =1;
 comprehensionpass=0;
 LodgeAResponse =0;
 displayincorrect =0;
-%trigger
+FrameIndex=1;
+EEGPass=0;
+TriggerToSend=Env.Triggers.Comprehension.Start;
 while comprehensionpass <4
     [keyIsDown]= KbQueueCheck(Env.MouseInfo{1,1}.index);
     [keyboardDown,~,whichkey]=KbCheck;
     [x,y] = GetMouse(Env.MainWindow);
-    DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).FrameIndex =FrameIndex;
 
-    switch DATA.useET
-        case 0
-            DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).SystemTime = GetSecs;
-            DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).OnsetTime =  DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).SystemTime  -start;
-
-        case 1
-            switch true
-                case isempty(CurrentSample)==1
-
-                    DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).TobiiLeftEyePos = FirstPassET(1,end).LeftEye.GazePoint.OnDisplayArea;
-                    DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).TobiiRightEyePos = FirstPassET(1,end).RightEye.GazePoint.OnDisplayArea;
-                    DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).TobiiLeftEyePupil = FirstPassET(1,end).LeftEye.Pupil.Diameter;
-                    DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).TobiiRightEyePupil = FirstPassET(1,end).LeftEye.Pupil.Diameter;
-                    DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).TobiiTime = FirstPassET(1,end).SystemTimeStamp;
-
-
-                case isempty(CurrentSample)==0
-
-                    DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).TobiiLeftEyePos= CurrentSample(1,end).LeftEye.GazePoint.OnDisplayArea;
-                    DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).TobiiRightEyePos  = CurrentSample(1,end).RightEye.GazePoint.OnDisplayArea;
-                    DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).TobiiLeftEyePupil = CurrentSample(1,end).LeftEye.Pupil.Diameter;
-                    DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).TobiiRightEyePupil = CurrentSample(1,end).LeftEye.Pupil.Diameter;
-                    DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).TobiiTime = CurrentSample(1,end).SystemTimeStamp;
-
-
-            end
-            CurrentSample = my_eyetracker.get_gaze_data();
-
-    end
     switch displayincorrect
         case 0
             switch Response
@@ -237,7 +203,9 @@ while comprehensionpass <4
     switch true
 
         case (Response ==1 && any(keyIsDown==1) && ismembertol(x,ResponseBoxCoords1(1,1):ResponseBoxCoords1(1,3))&& ismembertol(y,ResponseBoxCoords1(1,2):ResponseBoxCoords1(1,4))&& comprehensionpass==0 );
-            DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).Trigger = 113; % Response Given 113 - 1 represents experiment number and 3 represents Response to make decision for each trial in each block
+
+            TriggerToSend=Env.Triggers.Comprehension.IncorrectResponse;
+            EEGPass=1;
             DATA.ExperimentTwoComprehension(blocks).Block(1).ResponseAnswer="Incorrect";
             DATA.ExperimentTwoComprehension(blocks).Block(1).ResponseRT=GetSecs-start;
             LodgeAResponse =LodgeAResponse+1;
@@ -247,7 +215,8 @@ while comprehensionpass <4
             displayincorrect =1;
             comprehensionpass =0;
         case (Response ==1 && any(keyIsDown==1) && ismembertol(x,ResponseBoxCoords1(2,1):ResponseBoxCoords1(2,3))&& ismembertol(y,ResponseBoxCoords1(2,2):ResponseBoxCoords1(2,4)) && comprehensionpass==0);
-            DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).Trigger = 112; % Response Given 12 - 1 represents experiment number and 2 represents choice to see another bead for each trial in each block
+            TriggerToSend=Env.Triggers.Comprehension.CorrectResponse;
+            EEGPass=1;
             DATA.ExperimentTwoComprehension(blocks).Block(1).ResponseAnswer="Correct";
             DATA.ExperimentTwoComprehension(blocks).Block(1).ResponseRT=GetSecs-start;
             LodgeAResponse = LodgeAResponse;
@@ -257,7 +226,8 @@ while comprehensionpass <4
             comprehensionpass=1;
 
         case (Response ==2 && any(keyIsDown==1) && ismembertol(x,ResponseBoxCoords1(1,1):ResponseBoxCoords1(1,3))&& ismembertol(y,ResponseBoxCoords1(1,2):ResponseBoxCoords1(1,4))&& comprehensionpass==1);
-            DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).Trigger = 113; % Response Given 113 - 1 represents experiment number and 3 represents Response to make decision for each trial in each block
+            TriggerToSend=Env.Triggers.Comprehension.CorrectResponse;
+            EEGPass=1;
             DATA.ExperimentTwoComprehension(blocks).Block(2).ResponseAnswer="Correct";
             DATA.ExperimentTwoComprehension(blocks).Block(2).ResponseRT=GetSecs-start;
             LodgeAResponse =LodgeAResponse;
@@ -268,7 +238,8 @@ while comprehensionpass <4
             comprehensionpass =2;
 
         case (Response ==2 && any(keyIsDown==1) && ismembertol(x,ResponseBoxCoords1(2,1):ResponseBoxCoords1(2,3))&& ismembertol(y,ResponseBoxCoords1(2,2):ResponseBoxCoords1(2,4)) && comprehensionpass==1);
-            DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).Trigger = 112; % Response Given 12 - 1 represents experiment number and 2 represents choice to see another bead for each trial in each block
+            TriggerToSend=Env.Triggers.Comprehension.IncorrectResponse;
+            EEGPass=1;
             DATA.ExperimentTwoComprehension(blocks).Block(2).ResponseAnswer="Incorrect";
             DATA.ExperimentTwoComprehension(blocks).Block(2).ResponseRT=GetSecs-start;
             LodgeAResponse = LodgeAResponse+1;
@@ -278,7 +249,8 @@ while comprehensionpass <4
             comprehensionpass=comprehensionpass;
 
         case (Response ==3 && any(keyIsDown==1) && (ismembertol(x,ResponseBoxCoords2(1,4):ResponseBoxCoords2(3,4))&& ~ismembertol(y,ResponseBoxCoords2(2,4):ResponseBoxCoords2(4,4)))&& comprehensionpass==2);
-            DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).Trigger = 114; % Response Given 14 - 1 represents experiment number and 4 represents Response of A in each block
+            TriggerToSend=Env.Triggers.Comprehension.IncorrectResponse;
+            EEGPass=1;
             DATA.ExperimentTwoComprehension(blocks).Block(3).ResponseAnswer="Incorrect";
             DATA.ExperimentTwoComprehension(blocks).Block(3).ResponseRT=GetSecs-start;
             LodgeAResponse =LodgeAResponse+1;
@@ -288,7 +260,8 @@ while comprehensionpass <4
             comprehensionpass=comprehensionpass;
 
         case (Response ==3 && any(keyIsDown==1) && ismembertol(x,ResponseBoxCoords2(1,4):ResponseBoxCoords2(3,4))&& ismembertol(y,ResponseBoxCoords2(2,4):ResponseBoxCoords2(4,4))&& comprehensionpass==2);
-            DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).Trigger = 115; % Response Given 15 - 1 represents experiment number and 5 represents Response of B for each trial in each block
+            TriggerToSend=Env.Triggers.Comprehension.CorrectResponse;
+            EEGPass=1;
             DATA.ExperimentTwoComprehension(blocks).Block(3).ResponseAnswer = "Correct";
             DATA.ExperimentTwoComprehension(blocks).Block(3).ResponseRT=GetSecs-start;
             LodgeAResponse = LodgeAResponse;
@@ -298,10 +271,14 @@ while comprehensionpass <4
             comprehensionpass=3;
 
         case (displayincorrect==1 && keyboardDown==1 && KbName(whichkey)=="Return")
+            TriggerToSend=Env.Triggers.Comprehension.DisplayIncorrectEnd;
             displayincorrect=0;
+            EEGPass=1;
 
         case (Response==4 && keyboardDown==1 && KbName(whichkey)=="Return")
-            DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).Trigger = 115; % Response Given 15 - 1 represents experiment number and 5 represents Response of B for each trial in each block
+            TriggerToSend=Env.Triggers.Comprehension.End;
+
+            EEGPass=1;
             comprehensionpass=4;
 
     end
@@ -309,28 +286,62 @@ while comprehensionpass <4
     Screen('FillRect',window,colour1,Env.ExperimentTwoPractice.Coordinates);
     Screen('DrawingFinished',Env.MainWindow);
     [FlipTime,~,EndFlip]=Screen('Flip',Env.MainWindow,[]);
-    DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).FlipTimeStamp=FlipTime;
+    switch  DATA.useEEG
+        case 1
+            switch true
+                case FrameIndex==1
+                    sp.sendTrigger(TriggerToSend); % trigger
+                case (EEGPass==1)
+                    sp.sendTrigger(TriggerToSend); % trigger
+            end
+    end
+    switch DATA.useET
+        case 1
+            switch true
+                case FrameIndex==1
+                    TimeStamps(end+1,1) =TobiiOperations.get_system_time_stamp;
+                    TimeStamps(end,2)=TriggerToSend;
+
+                case (EEGPass==1)
+                    TimeStamps(end+1,1) =TobiiOperations.get_system_time_stamp;
+                    TimeStamps(end,2)=TriggerToSend;
+            end
+    end
     FrameIndex=FrameIndex+1;
-
-
+    TriggerToSend=0;
+    EEGPass=0;
 end
 
-  if exist('ExptData', 'dir') == 0
-        mkdir('ExptData\EXP2');
-    end
-    if exist('ExptData\EXP2\combined','dir')==0
-        mkdir('ExptData\EXP2\combined');
-    end
-  
-    ExcelFile = ['ExptData\EXP2\myComprehensionDataP', num2str(DATA.participantNum), '_B', num2str(blocks),'_Data', '.xlsx'];
-    if isfile(ExcelFile)==1
-        ExcelFile = ['ExptData\EXP2\myComprehensionDataP', num2str(DATA.participantNum),'_B',num2str(blocks),'_Data','DOUBLECHANGEPNUM', '.xlsx'];
-    end
-    writetable(struct2table(DATA.ExperimentTwoComprehension), ExcelFile);
+if exist('ExptData', 'dir') == 0
+    mkdir('ExptData\EXP2');
+end
+if exist('ExptData\EXP2\combined','dir')==0
+    mkdir('ExptData\EXP2\combined');
+end
 
+ExcelFile = ['ExptData\EXP2\combined\myComprehensionDataP', num2str(DATA.participantNum), '_B', num2str(blocks),'_Data', '.xlsx'];
+if isfile(ExcelFile)==1
+    ExcelFile = ['ExptData\EXP2\combined\myComprehensionDataP', num2str(DATA.participantNum),'_B',num2str(blocks),'_Data','DOUBLECHANGEPNUM', '.xlsx'];
+end
+writetable(struct2table(DATA.ExperimentTwoComprehension.Block), ExcelFile);
+TriggerToSend=Env.Triggers.Practice.StartBlock;
+[FlipTime,~,EndFlip]=Screen('Flip',Env.MainWindow,[]);
+switch  DATA.useEEG
+    case 1
+        sp.sendTrigger(TriggerToSend); % trigger
+end
+switch DATA.useET
+    case 1
+        TimeStamps(end+1,1) =TobiiOperations.get_system_time_stamp;
+        TimeStamps(end,2)= TriggerToSend;
+end
+TriggerToSend=0;
 
 for blocks =1:1
+
     for PracticeTrials =1:width(PracticeSequence)
+        FrameIndex=1;
+
         TranslateCorrectColour(TranslateCorrectColourAAnswerIdx(:,PracticeTrials),PracticeTrials) = AnswerQuote1;
         TranslateCorrectColour(TranslateCorrectColourBAnswerIdx(:,PracticeTrials),PracticeTrials) =AnswerQuote2;
         DATA.ExperimentTwoPractice(blocks).Block(PracticeTrials).CorrectResponseColour = TranslateCorrectColourBoxAnswer(PracticeTrials,blocks);
@@ -343,8 +354,10 @@ for blocks =1:1
         for colourfill =1:width(BoxColour)
             colour(colourfill,:)= BoxColour(colourfill)';
         end
-        FlipTime=Screen('Flip',Env.MainWindow,[]);
+
         WaitSecs(intertrialinterval);
+        TriggerToSend=Env.Triggers.Practice.StartTrial;
+
         start =GetSecs;
 
         for Attempts =1:nMaxAttempts
@@ -356,6 +369,8 @@ for blocks =1:1
             KbQueueStart(Env.MouseInfo{1,1}.index);
             CurrentSample =[];
             %start =GetSecs;
+            EEGPass=0;
+
             while LodgeAResponse <2
                 [keyIsDown,timekeyisdown,KeyisReleased,~,~]= KbQueueCheck(Env.MouseInfo{1,1}.index);
                 [x,y,buttons] = GetMouse(Env.MainWindow);
@@ -394,16 +409,23 @@ for blocks =1:1
 
                         if DATA.ExperimentTwoPractice(blocks).Block(PracticeTrials).NumBoxtoDecision <25
                             colour(:,CoordinatesIdx)=cell2mat(PracticeSequence(Attempts,PracticeTrials))';
+                            TriggerToSend=Env.Triggers.Practice.ResponseSeeMore;
+
                             BreakMeOut = 1;
                             LodgeAResponse =0;
                             DATA.ExperimentTwoPractice(blocks).Block(PracticeTrials).NumBoxtoDecision = DATA.ExperimentTwoPractice(blocks).Block(PracticeTrials).NumBoxtoDecision+1;
                         else
+                            TriggerToSend=Env.Triggers.Practice.ResponseMaxNumReached;
+
                             BreakMeOut = 0;
                             LodgeAResponse =0;
                             DATA.ExperimentTwoPractice(blocks).Block(PracticeTrials).NumBoxtoDecision = nMaxAttempts;%DATA.ExperimentTwoPractice(blocks).Block(Trials).NumBoxtoDecision+1;
                         end
+                        EEGPass=1;
+
                     case (DATA.ExperimentTwoPractice(blocks).Block(PracticeTrials).NumBoxtoDecision>0 && any(keyIsDown==1) && ismembertol(x,ResponseBoxCoords4(1,1):ResponseBoxCoords4(1,3))&& ismembertol(y,ResponseBoxCoords4(1,2):ResponseBoxCoords4(1,4))&& Response ==1 &&LodgeAResponse==0);
-                        DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).Trigger = 114; % Response Given 14 - 1 represents experiment number and 4 represents Response of A in each block
+                        TriggerToSend=Env.Triggers.Practice.ResponseA;
+                        EEGPass=1;
                         DATA.ExperimentTwoPractice(blocks).Block(PracticeTrials).BoxResponseAnswer="ColourA";
                         DATA.ExperimentTwoPractice(blocks).Block(PracticeTrials).BoxResponseColour=AnswerQuote1;
                         DATA.ExperimentTwoPractice(blocks).Block(PracticeTrials).ResponseRT=GetSecs-start;
@@ -411,7 +433,8 @@ for blocks =1:1
                         LodgeAResponse =1;
                         Response =2;
                     case (DATA.ExperimentTwoPractice(blocks).Block(PracticeTrials).NumBoxtoDecision>0 && any(keyIsDown==1) && ismembertol(x,ResponseBoxCoords4(2,1):ResponseBoxCoords4(2,3))&& ismembertol(y,ResponseBoxCoords4(2,2):ResponseBoxCoords4(2,4)) && Response ==1 && LodgeAResponse==0);
-                        DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).Trigger = 115; % Response Given 15 - 1 represents experiment number and 5 represents Response of B for each trial in each block
+                        TriggerToSend=Env.Triggers.Practice.ResponseB;
+                        EEGPass=1;
                         DATA.ExperimentTwoPractice(blocks).Block(PracticeTrials).BoxResponseAnswer = "ColourB";
                         DATA.ExperimentTwoPractice(blocks).Block(PracticeTrials).BoxResponseColour=AnswerQuote2;
                         DATA.ExperimentTwoPractice(blocks).Block(PracticeTrials).ResponseRT=GetSecs-start;
@@ -419,10 +442,11 @@ for blocks =1:1
                         LodgeAResponse =1;
                         Response =2;
                     case (Response ==2 && any(keyIsDown==1) && ismembertol(x,LineDetails(1)-10:LineDetails(3))&& ismembertol(y,LineDetails(2)-20:LineDetails(4)+20)&& LodgeAResponse==1)
+                        TriggerToSend=Env.Triggers.Practice.ConfidenceResponse;
+                        EEGPass=1;
                         DATA.ExperimentTwoPractice(blocks).Block(PracticeTrials).Confidence = NumberToDisplay;
                         DATA.ExperimentTwoPractice(blocks).Block(PracticeTrials).ConfidenceRT = GetSecs-ResponseSystemTime;
 
-                        DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).Trigger = 116; % Response Given 16 - 1 represents experiment number and 6 represents confidence Response for each trial in each block
 
                         LodgeAResponse =2;
                     otherwise
@@ -462,43 +486,35 @@ for blocks =1:1
 
                 ResponseHighlighter2 = Env.Colours.White;
 
-                switch DATA.useET
-                    case 0
-                        DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).SystemTime = GetSecs;
-                        DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).OnsetTime =  DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).SystemTime  -start;
-
-                    case 1
-                        switch true
-                            case isempty(CurrentSample)==1
-
-                                DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).TobiiLeftEyePos = FirstPassET(1,end).LeftEye.GazePoint.OnDisplayArea;
-                                DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).TobiiRightEyePos = FirstPassET(1,end).RightEye.GazePoint.OnDisplayArea;
-                                DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).TobiiLeftEyePupil = FirstPassET(1,end).LeftEye.Pupil.Diameter;
-                                DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).TobiiRightEyePupil = FirstPassET(1,end).LeftEye.Pupil.Diameter;
-                                DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).TobiiTime = FirstPassET(1,end).SystemTimeStamp;
 
 
-                            case isempty(CurrentSample)==0
-
-                                DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).TobiiLeftEyePos= CurrentSample(1,end).LeftEye.GazePoint.OnDisplayArea;
-                                DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).TobiiRightEyePos  = CurrentSample(1,end).RightEye.GazePoint.OnDisplayArea;
-                                DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).TobiiLeftEyePupil = CurrentSample(1,end).LeftEye.Pupil.Diameter;
-                                DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).TobiiRightEyePupil = CurrentSample(1,end).LeftEye.Pupil.Diameter;
-                                DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).TobiiTime = CurrentSample(1,end).SystemTimeStamp;
-                        end
-                        CurrentSample = my_eyetracker.get_gaze_data();
-
-                end
-
-                if BreakMeOut ==1
-                    break
-                end
+             
                 ScreenFlipTime = FlipTime+(DATA.WaitFrameInput-0.5)*DATA.FlipInterval;
                 FlipTime=  Screen('Flip',Env.MainWindow,ScreenFlipTime);
-                %BIOSEMI HERE
-                DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).FrameIndex =FrameIndex;
-                DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).FlipTimeStamp=FlipTime;
+                switch  DATA.useEEG
+                    case 1
+                        switch true
+                            case FrameIndex==1
+                                sp.sendTrigger(TriggerToSend); % trigger
+                            case ( EEGPass==1)
+                                sp.sendTrigger(TriggerToSend); % trigger
+                        end
+                end
+                switch DATA.useET
+                    case 1
+                        switch true
+                            case FrameIndex==1
+                                TimeStamps(end+1,1) =TobiiOperations.get_system_time_stamp;
+                                TimeStamps(end,2)=TriggerToSend;
+                            case (EEGPass==1)
+                                TimeStamps(end+1,1) =TobiiOperations.get_system_time_stamp;
+                                TimeStamps(end,2)=TriggerToSend;
+
+                        end
+                end
                 FrameIndex=FrameIndex+1;
+                TriggerToSend=0;
+                EEGPass=0;
 
                 if BreakMeOut ==1
                     break
@@ -506,23 +522,27 @@ for blocks =1:1
 
 
             end
+
+            if LodgeAResponse ==2
+                break
+            end
         end
     end
 end
 
-  %% First, write a Matlab file filled with all relevant DATA.
-    if exist('ExptData', 'dir') == 0
-        mkdir('ExptData\EXP2');
-    end
-    if exist('ExptData\EXP2\combined','dir')==0
-        mkdir('ExptData\EXP2\combined');
-    end
-  
-    ExcelFile = ['ExptData\EXP2\myPracticeDataP', num2str(DATA.participantNum), '_B', num2str(blocks),'_Data', '.xlsx'];
-    if isfile(ExcelFile)==1
-        ExcelFile = ['ExptData\EXP2\myPracticeDataP', num2str(DATA.participantNum),'_B',num2str(blocks),'_Data','DOUBLECHANGEPNUM', '.xlsx'];
-    end
-    writetable(struct2table(DATA.ExperimentTwoPractice(blocks).Block), ExcelFile);
+%% First, write a Matlab file filled with all relevant DATA.
+if exist('ExptData', 'dir') == 0
+    mkdir('ExptData\EXP2');
+end
+if exist('ExptData\EXP2\combined','dir')==0
+    mkdir('ExptData\EXP2\combined');
+end
+
+ExcelFile = ['ExptData\EXP2\combined\myPracticeDataP', num2str(DATA.participantNum), '_B', num2str(blocks),'_Data', '.xlsx'];
+if isfile(ExcelFile)==1
+    ExcelFile = ['ExptData\EXP2\combined\myPracticeDataP', num2str(DATA.participantNum),'_B',num2str(blocks),'_Data','DOUBLECHANGEPNUM', '.xlsx'];
+end
+writetable(struct2table(DATA.ExperimentTwoPractice(blocks).Block), ExcelFile);
 
 MoveOn=0;
 while MoveOn~=1
@@ -530,46 +550,28 @@ while MoveOn~=1
     %trigger
     DrawFormattedText(Env.MainWindow,sprintf('%s',PracticeEndText),'center','center',[],120,[],[],2);
     Screen('DrawingFinished',Env.MainWindow);
-    DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).FrameIndex =FrameIndex;
 
-    switch DATA.useET
-        case 0
-            DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).SystemTime = GetSecs;
-            DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).OnsetTime =  DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).SystemTime  -start;
-
-        case 1
-            switch true
-                case isempty(CurrentSample)==1
-
-                    DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).TobiiLeftEyePos = FirstPassET(1,end).LeftEye.GazePoint.OnDisplayArea;
-                    DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).TobiiRightEyePos = FirstPassET(1,end).RightEye.GazePoint.OnDisplayArea;
-                    DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).TobiiLeftEyePupil = FirstPassET(1,end).LeftEye.Pupil.Diameter;
-                    DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).TobiiRightEyePupil = FirstPassET(1,end).LeftEye.Pupil.Diameter;
-                    DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).TobiiTime = FirstPassET(1,end).SystemTimeStamp;
-
-
-                case isempty(CurrentSample)==0
-
-                    DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).TobiiLeftEyePos= CurrentSample(1,end).LeftEye.GazePoint.OnDisplayArea;
-                    DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).TobiiRightEyePos  = CurrentSample(1,end).RightEye.GazePoint.OnDisplayArea;
-                    DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).TobiiLeftEyePupil = CurrentSample(1,end).LeftEye.Pupil.Diameter;
-                    DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).TobiiRightEyePupil = CurrentSample(1,end).LeftEye.Pupil.Diameter;
-                    DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).TobiiTime = CurrentSample(1,end).SystemTimeStamp;
-
-
-            end
-            CurrentSample = my_eyetracker.get_gaze_data();
-
-    end
 
     if (keyboardDown ==1 && KbName(whichkey)=="Return")
         MoveOn=1;
-        %trigger
+        TriggerToSend =Env.Triggers.Exp.Start;
     end
     [FlipTime,~,EndFlip]=Screen('Flip',Env.MainWindow,[]);
-    DATA.ExperimentTwoPractice(blocks).EyeData(FrameIndex).FlipTimeStamp=FlipTime;
-
-    FrameIndex =FrameIndex+1;
+    switch DATA.useEEG
+        case 1
+            switch MoveOn
+                case 1
+                    sp.sendTrigger(TriggerToSend); % trigger
+            end
+    end
+    switch DATA.useET
+        case 1
+            switch MoveOn
+                case 1
+                    TimeStamps(end+1,1) =TobiiOperations.get_system_time_stamp;
+                    TimeStamps(end,2)= TriggerToSend;
+            end
+    end
 end
 KbReleaseWait;
 

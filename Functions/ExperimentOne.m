@@ -1,7 +1,9 @@
 %Written by Tess Barich 2021.
 function ExperimentOne(ConditionSequence) % Bead Jar Task
 %   Declare Globals
-global DATA Env Calib Jar Bead BeadSize ResponseBoxCoords QuestionQuote1 QuestionQuote2 ConfidenceQuote LowAnchor HighAnchor LineLength LineDivide ResponseBoxCoords1
+global DATA Env  Jar Bead BeadSize ResponseBoxCoords QuestionQuote1 QuestionQuote2 ConfidenceQuote LowAnchor HighAnchor LineLength LineDivide ResponseBoxCoords1
+global MyEyeTracker sp TimeStamps OverallGazeData TobiiOperations
+
 %% The Adjustables - The Goblet for One
 QuestionQuote1 = "A random bead has been drawn from the selected jar. Would you like to make a decision on which jar beads are being drawn from?";
 QuestionQuote2 = "Which jar have you decided beads are being drawn from?";
@@ -18,7 +20,9 @@ TotalBeadsInJar = 1000; % can set to whatever you want.
 MainColourNumberBeads = round((85/100)*TotalBeadsInJar);
 SecondaryColourNumberBeads = round((15/100)*TotalBeadsInJar);
 nBlocks =4;
-ConditionSequence =  [2,1,3,4];%randperm(4);
+Condition=[1,3,4];
+Condition=Shuffle(Condition);
+ConditionSequence = [Condition(1),1,Condition(2),Condition(3)];%randperm(4);
 SequenceOrder = [1,2,3,4]; % Built this in incase you ever want to change  the sequence presentation order. randperm(4);
 targetseq= SequenceOrder(2);
 distractorseqone= SequenceOrder(1);
@@ -65,11 +69,21 @@ Exp1ComprehensionCheck(Env.Loc_Stimuli,Env.MainWindow,Env.OffScreenWindow, Pract
 
 
 %% Build the sequences
-if DATA.useET ==1;
-    RubbishET = my_eyetracker.get_gaze_data();
-end
-for blocks = 1: nBlocks
 
+for blocks = 1: nBlocks
+    TriggerToSend=Env.Triggers.Exp.StartBlock;
+    FlipTime=  Screen('Flip',Env.MainWindow,[]);
+    switch DATA.useEEG
+        case 1
+            sp.sendTrigger(TriggerToSend); % trigger
+    end
+    switch DATA.useET
+        case 1
+            TimeStamps(end+1,1) =TobiiOperations.get_system_time_stamp;
+            TimeStamps(end,2)= TriggerToSend;
+    end
+
+    TriggerToSend=0;
     JarAnswer(:,blocks) = randi(2,[4,1]); % 1 = original sequence, 2 inverted sequence
     for SequenceBuilding = 1:nBlocks
         switch SequenceOrder(SequenceBuilding)
@@ -161,57 +175,49 @@ for blocks = 1: nBlocks
 
     BeadTexture = repmat({Env.Stimuli(Bead).TexturePointer},height(Sequence),1);
     FrameIndex =1;
-    if DATA.useET==1
-        FirstPassET = my_eyetracker.get_gaze_data();
-    end
     start =GetSecs;
     MoveOn=0;
+    TriggerToSend=Env.Triggers.Exp.BlockStartText;
+
     while MoveOn~=1
         [keyboardDown,~,whichkey]=KbCheck;
         %trigger
         DrawFormattedText(Env.MainWindow,sprintf('%s',BlockStartText),'center','center',[],120,[],[],2);
         Screen('DrawingFinished',Env.MainWindow);
-        DATA.ExperimentOne(blocks).EyeData(FrameIndex).FrameIndex =FrameIndex;
-
-        switch DATA.useET
-            case 0
-                DATA.ExperimentOne(blocks).EyeData(FrameIndex).SystemTime = GetSecs;
-                DATA.ExperimentOne(blocks).EyeData(FrameIndex).OnsetTime =  DATA.ExperimentOne(blocks).EyeData(FrameIndex).SystemTime  -start;
-
-            case 1
-                switch true
-                    case isempty(CurrentSample)==1
-
-                        DATA.ExperimentOne(blocks).EyeData(FrameIndex).TobiiLeftEyePos = FirstPassET(1,end).LeftEye.GazePoint.OnDisplayArea;
-                        DATA.ExperimentOne(blocks).EyeData(FrameIndex).TobiiRightEyePos = FirstPassET(1,end).RightEye.GazePoint.OnDisplayArea;
-                        DATA.ExperimentOne(blocks).EyeData(FrameIndex).TobiiLeftEyePupil = FirstPassET(1,end).LeftEye.Pupil.Diameter;
-                        DATA.ExperimentOne(blocks).EyeData(FrameIndex).TobiiRightEyePupil = FirstPassET(1,end).LeftEye.Pupil.Diameter;
-                        DATA.ExperimentOne(blocks).EyeData(FrameIndex).TobiiTime = FirstPassET(1,end).SystemTimeStamp;
-
-
-                    case isempty(CurrentSample)==0
-
-                        DATA.ExperimentOne(blocks).EyeData(FrameIndex).TobiiLeftEyePos= CurrentSample(1,end).LeftEye.GazePoint.OnDisplayArea;
-                        DATA.ExperimentOne(blocks).EyeData(FrameIndex).TobiiRightEyePos  = CurrentSample(1,end).RightEye.GazePoint.OnDisplayArea;
-                        DATA.ExperimentOne(blocks).EyeData(FrameIndex).TobiiLeftEyePupil = CurrentSample(1,end).LeftEye.Pupil.Diameter;
-                        DATA.ExperimentOne(blocks).EyeData(FrameIndex).TobiiRightEyePupil = CurrentSample(1,end).LeftEye.Pupil.Diameter;
-                        DATA.ExperimentOne(blocks).EyeData(FrameIndex).TobiiTime = CurrentSample(1,end).SystemTimeStamp;
-
-
-                end
-                CurrentSample = my_eyetracker.get_gaze_data();
-
-        end
 
         if (keyboardDown ==1 && KbName(whichkey)=="Return")
+            TriggerToSend=Env.Triggers.Exp.BlockEndText;
 
             MoveOn=1;
-            %trigger
         end
         [FlipTime,~,EndFlip]=Screen('Flip',Env.MainWindow,[]);
-        DATA.ExperimentOne(blocks).EyeData(FrameIndex).FlipTimeStamp=FlipTime;
+        switch DATA.useEEG
+            case 1
+                switch true
+                    case FrameIndex==1
+                        sp.sendTrigger(TriggerToSend); % trigger
+                    case MoveOn==1
+                        sp.sendTrigger(TriggerToSend); % trigger
+
+                end
+        end
+
+        switch DATA.useET
+            case 1
+                switch true
+                    case FrameIndex==1
+                        TimeStamps(end+1,1) =TobiiOperations.get_system_time_stamp;
+                        TimeStamps(end,2)= TriggerToSend;
+                    case MoveOn==1
+                        TimeStamps(end+1,1) =TobiiOperations.get_system_time_stamp;
+                        TimeStamps(end,2)= TriggerToSend;
+                end
+        end
+        TriggerToSend=0;
+
         FrameIndex =FrameIndex+1;
     end
+
 
     if ConditionSequence(blocks)==1
         nTrials =5;
@@ -219,13 +225,14 @@ for blocks = 1: nBlocks
         nTrials =4;
 
     end
+
     for Trials = 1:nTrials % The things that need to happen on each trial
         clear DispStim LodgeAResponse BreakMeOut Response
+        FrameIndex=1;
         switch true
 
             case Trials<=4
-
-                DATA.ExperimentOne(blocks).EyeData(FrameIndex).Trigger = 110; % Trigger Given 10 - 1 represents experiment number and 0 represents start of each trial in each block.
+                TriggerToSend=Env.Triggers.Exp.StartTrial;
                 DATA.ExperimentOne(blocks).Block(Trials).ParticipantNum = DATA.participantNum;
                 DATA.ExperimentOne(blocks).Block(Trials).ParticipantAge = DATA.participantAge;
                 DATA.ExperimentOne(blocks).Block(Trials).ParticipantGen = DATA.participantGen;
@@ -237,8 +244,7 @@ for blocks = 1: nBlocks
                 DATA.ExperimentOne(blocks).Block(Trials).NumBeadstoDecision = 1;
 
             case Trials==5
-                DATA.ExperimentOne(blocks).EyeData(FrameIndex).Trigger = 121; % Trigger Given 10 - 1 represents experiment number and 0 represents start of each trial in each block.
-
+                TriggerToSend=Env.Triggers.Attention.Start;
                 DATA.ExperimentOneAttentionCheck(1).ParticipantNum = DATA.participantNum;
                 DATA.ExperimentOneAttentionCheck(1).ParticipantAge = DATA.participantAge;
                 DATA.ExperimentOneAttentionCheck(1).ParticipantGen = DATA.participantGen;
@@ -255,10 +261,18 @@ for blocks = 1: nBlocks
 
         end
         NumBeadstoDecision = 1;
-
-        [FlipTime,~,EndFlip]=Screen('Flip',Env.MainWindow,[]);
-
         WaitSecs(intertrialinterval);
+        [FlipTime,~,EndFlip]=Screen('Flip',Env.MainWindow,[]);
+        switch  DATA.useEEG
+            case 1
+                sp.sendTrigger(TriggerToSend); % trigger
+        end
+        switch DATA.useET
+            case 1
+                TimeStamps(end+1,1) =TobiiOperations.get_system_time_stamp;
+                TimeStamps(end,2)= TriggerToSend;
+        end
+
         start =GetSecs;
 
         for Attempts =1:nBeadstoPresent
@@ -282,8 +296,8 @@ for blocks = 1: nBlocks
             ResponseHighlighter2 = Env.Colours.Black;
             KbQueueCreate(Env.MouseInfo{1,1}.index,[],2);
             KbQueueStart(Env.MouseInfo{1,1}.index);
-            CurrentSample =[];
             %start =GetSecs;
+            EEGPass=0;
             while LodgeAResponse <3
 
                 [keyIsDown]= KbQueueCheck(Env.MouseInfo{1,1}.index);
@@ -317,12 +331,15 @@ for blocks = 1: nBlocks
 
                         if  (keyboardDown ==1 && KbName(whichkey)=="Return")
 
-                            LodgeAResponse=3; %add trigger
+                            LodgeAResponse=3;
+                            TriggerToSend=Env.Triggers.Attention.End;
+                            EEGPass=1;
+
+
                         end
 
 
                 end
-
 
 
 
@@ -352,7 +369,6 @@ for blocks = 1: nBlocks
                         Screen('DrawTexture',Env.MainWindow,Env.AttentionCheckTex,[],[my_centreTexture(35,35,coordinates(1,1)+25,coordinates(2,1)+17.5)]',[],[],[],[mask]);
                 end
 
-
                 switch true
                     case Response ==3
                         Screen('FillRect',Env.MainWindow,Env.Colours.White,[Env.ScreenInfo.Centre(1)-(LineLength/2),Env.ScreenInfo.Centre(2)+120,Env.ScreenInfo.Centre(1)+(LineLength/2),Env.ScreenInfo.Centre(2)+125]);
@@ -374,67 +390,66 @@ for blocks = 1: nBlocks
 
                     case Response==7
                         %mask =[0,0,0,0];
-
                         DrawFormattedText(Env.MainWindow,sprintf('Press enter after you have typed response to lodge answer'),'center',Env.ScreenInfo.Centre(2)+100);
-
                         [DATA.ExperimentOneAttentionCheck(2).AttentionResponseAnswer]=GetEchoString(Env.MainWindow,'', Env.ScreenInfo.Centre(1),CentreJarOne(4)+160,[0,0,0],[Env.Colours.LightGrey]);
-
-
-
                 end
 
                 Screen('DrawingFinished',Env.MainWindow);
 
-
                 switch true
 
                     case (any(keyIsDown==1) && ismembertol(x,ResponseBoxCoords(1,1):ResponseBoxCoords(1,3))&& ismembertol(y,ResponseBoxCoords(1,2):ResponseBoxCoords(1,4))&& Response ==1 && LodgeAResponse==0 );
-                        DATA.ExperimentOne(blocks).EyeData(FrameIndex).Trigger = 113; % Response Given 113 - 1 represents experiment number and 3 represents Response to make decision for each trial in each block
+                        EEGPass=1;
                         LodgeAResponse =1;
-
                         if Trials<=4
+                            TriggerToSend=Env.Triggers.Exp.ResponseYes;
+
                             Response = 2; % Yes
                         elseif Trials==5
+                            TriggerToSend=Env.Triggers.Attention.StartQuestions;
+
                             Response =6;
-                            DATA.ExperimentOne(blocks).EyeData(FrameIndex).Trigger = 119; % Response Given 113 - 1 represents experiment number and 3 represents Response to make decision for each trial in each block
+
 
                         end
 
                     case (any(keyIsDown==1) && ismembertol(x,ResponseBoxCoords(1,1):ResponseBoxCoords(1,3))&& ismembertol(y,ResponseBoxCoords(1,2):ResponseBoxCoords(1,4))&& Response ==2 &&LodgeAResponse==1);
-                        DATA.ExperimentOne(blocks).EyeData(FrameIndex).Trigger = 114; % Response Given 14 - 1 represents experiment number and 4 represents Response of A in each block
+                        TriggerToSend=Env.Triggers.Exp.ResponseA;
                         DATA.ExperimentOne(blocks).Block(Trials).JarResponseAnswer="JarA";
                         DATA.ExperimentOne(blocks).Block(Trials).JarResponseRT=GetSecs-start;
                         JarResponseSystemTime=GetSecs;
-
                         LodgeAResponse =2;
                         Response =3;
 
-
                     case (any(keyIsDown==1) && ismembertol(x,ResponseBoxCoords(2,1):ResponseBoxCoords(2,3))&& ismembertol(y,ResponseBoxCoords(2,2):ResponseBoxCoords(2,4)) && Response==1 && LodgeAResponse==0);
-                        DATA.ExperimentOne(blocks).EyeData(FrameIndex).Trigger = 112; % Response Given 12 - 1 represents experiment number and 2 represents choice to see another bead for each trial in each block
+                        EEGPass=1;
+
                         switch true
-                                case NumBeadstoDecision <10 && Trials<=4
+                            case NumBeadstoDecision <10 && Trials<=4
+                                TriggerToSend=Env.Triggers.Exp.ResponseSeeMore;
+
                                 NumBeadstoDecision = NumBeadstoDecision+1;
                                 BreakMeOut = 1;
                                 LodgeAResponse =0;
                                 DATA.ExperimentOne(blocks).Block(Trials).NumBeadstoDecision = NumBeadstoDecision;
                             case NumBeadstoDecision >=10 && Trials<=4
+                                TriggerToSend=Env.Triggers.Exp.ResponseMaxNumReached;
+
                                 BreakMeOut = 0;
                                 LodgeAResponse =1;
                                 Response = 2;
                                 DATA.ExperimentOne(blocks).Block(Trials).NumBeadstoDecision = DATA.ExperimentOne(blocks).Block(Trials).NumBeadstoDecision+1;
                             case NumBeadstoDecision <10 && Trials==5
-                                DATA.ExperimentOne(blocks).EyeData(FrameIndex).Trigger = 120; % Response Given 113 - 1 represents experiment number and 3 represents Response to make decision for each trial in each block
+                                TriggerToSend=Env.Triggers.Attention.StartQuestions;
 
                                 Response =6;
                                 LodgeAResponse =1;
 
-
-
                         end
 
                     case (any(keyIsDown==1) && ismembertol(x,ResponseBoxCoords(2,1):ResponseBoxCoords(2,3))&& ismembertol(y,ResponseBoxCoords(2,2):ResponseBoxCoords(2,4)) && Response ==2 && LodgeAResponse==1);
-                        DATA.ExperimentOne(blocks).EyeData(FrameIndex).Trigger = 115; % Response Given 15 - 1 represents experiment number and 5 represents Response of B for each trial in each block
+                        TriggerToSend=Env.Triggers.Exp.ResponseB;
+                        EEGPass=1;
 
                         DATA.ExperimentOne(blocks).Block(Trials).JarResponseAnswer = "JarB";
                         DATA.ExperimentOne(blocks).Block(Trials).JarResponseRT=GetSecs-start;
@@ -443,14 +458,17 @@ for blocks = 1: nBlocks
                         LodgeAResponse =2;
 
                     case (Response ==3 && any(keyIsDown==1) && ismembertol(x,LineDetails(1)-10:LineDetails(3))&& ismembertol(y,LineDetails(2)-20:LineDetails(4)+20)&& LodgeAResponse==2)
+                        TriggerToSend=Env.Triggers.Exp.ConfidenceResponse;
+
+                        EEGPass=1;
+
                         DATA.ExperimentOne(blocks).Block(Trials).Confidence = NumberToDisplay;
                         DATA.ExperimentOne(blocks).Block(Trials).ConfidenceRT = GetSecs-JarResponseSystemTime;
 
-                        DATA.ExperimentOne(blocks).EyeData(FrameIndex).Trigger = 116; % Response Given 16 - 1 represents experiment number and 6 represents confidence Response for each trial in each block
-
                         LodgeAResponse =3;
                     case (any(keyIsDown==1) && ismembertol(x,ResponseBoxCoords1(2,1):ResponseBoxCoords1(2,3))&& ismembertol(y,ResponseBoxCoords1(2,2):ResponseBoxCoords1(2,4)) && Response ==6 && LodgeAResponse==1)
-                        DATA.ExperimentOne(blocks).EyeData(FrameIndex).Trigger = 117; % Response Given 15 - 1 represents experiment number and 5 represents Response of B for each trial in each block
+                        TriggerToSend=Env.Triggers.Attention.NoNoticedResponse;
+                        EEGPass=1;
 
                         DATA.ExperimentOneAttentionCheck(1).AttentionResponseAnswer.AttentionResponseAnswer = "No";
                         DATA.ExperimentOneAttentionCheck(1).AttentionResponseRT=GetSecs-start;
@@ -458,8 +476,8 @@ for blocks = 1: nBlocks
                         Response =8;
                         LodgeAResponse =2;
                     case (any(keyIsDown==1) && ismembertol(x,ResponseBoxCoords1(1,1):ResponseBoxCoords1(1,3))&& ismembertol(y,ResponseBoxCoords1(1,2):ResponseBoxCoords1(1,4)) && Response ==6 && LodgeAResponse==1)
-                        DATA.ExperimentOne(blocks).EyeData(FrameIndex).Trigger = 118; % Response Given 15 - 1 represents experiment number and 5 represents Response of B for each trial in each block
-
+                        TriggerToSend=Env.Triggers.Attention.YesNoticedResponse;
+                        EEGPass=1;
                         DATA.ExperimentOneAttentionCheck(1).AttentionResponseAnswer = "Yes";
                         DATA.ExperimentOneAttentionCheck(1).AttentionResponseRT=GetSecs-start;
                         JarResponseSystemTime=GetSecs;
@@ -467,12 +485,12 @@ for blocks = 1: nBlocks
                         LodgeAResponse=2;
 
                     case (Response==7&& ~isempty(DATA.ExperimentOneAttentionCheck(2).AttentionResponseAnswer))
-                        DATA.ExperimentOne(blocks).EyeData(FrameIndex).Trigger = 119; % Response Given 15 - 1 represents experiment number and 5 represents Response of B for each trial in each block
+                        TriggerToSend=Env.Triggers.Attention.EndFreeResponse;
+                        EEGPass=1;
 
                         DATA.ExperimentOneAttentionCheck(2).AttentionResponseRT=GetSecs-JarResponseSystemTime;
                         JarResponseSystemTime=GetSecs;
                         KbReleaseWait;
-
                         Response=8;
                         LodgeAResponse=2;
                     otherwise
@@ -483,45 +501,36 @@ for blocks = 1: nBlocks
                 ResponseHighlighter2 = Env.Colours.Black;
 
 
-                switch DATA.useET
-                    case 0
-                        DATA.ExperimentOne(blocks).EyeData(FrameIndex).SystemTime = GetSecs;
-                        DATA.ExperimentOne(blocks).EyeData(FrameIndex).OnsetTime =  DATA.ExperimentOne(blocks).EyeData(FrameIndex).SystemTime  -start;
-
+                ScreenFlipTime = FlipTime+(DATA.WaitFrameInput-0.5)*DATA.FlipInterval;
+                FlipTime=  Screen('Flip',Env.MainWindow,ScreenFlipTime);
+                switch  DATA.useEEG
                     case 1
                         switch true
-                            case isempty(CurrentSample)==1
-
-                                DATA.ExperimentOne(blocks).EyeData(FrameIndex).TobiiLeftEyePos = FirstPassET(1,end).LeftEye.GazePoint.OnDisplayArea;
-                                DATA.ExperimentOne(blocks).EyeData(FrameIndex).TobiiRightEyePos = FirstPassET(1,end).RightEye.GazePoint.OnDisplayArea;
-                                DATA.ExperimentOne(blocks).EyeData(FrameIndex).TobiiLeftEyePupil = FirstPassET(1,end).LeftEye.Pupil.Diameter;
-                                DATA.ExperimentOne(blocks).EyeData(FrameIndex).TobiiRightEyePupil = FirstPassET(1,end).LeftEye.Pupil.Diameter;
-                                DATA.ExperimentOne(blocks).EyeData(FrameIndex).TobiiTime = FirstPassET(1,end).SystemTimeStamp;
-
-
-                            case isempty(CurrentSample)==0
-
-                                DATA.ExperimentOne(blocks).EyeData(FrameIndex).TobiiLeftEyePos= CurrentSample(1,end).LeftEye.GazePoint.OnDisplayArea;
-                                DATA.ExperimentOne(blocks).EyeData(FrameIndex).TobiiRightEyePos  = CurrentSample(1,end).RightEye.GazePoint.OnDisplayArea;
-                                DATA.ExperimentOne(blocks).EyeData(FrameIndex).TobiiLeftEyePupil = CurrentSample(1,end).LeftEye.Pupil.Diameter;
-                                DATA.ExperimentOne(blocks).EyeData(FrameIndex).TobiiRightEyePupil = CurrentSample(1,end).LeftEye.Pupil.Diameter;
-                                DATA.ExperimentOne(blocks).EyeData(FrameIndex).TobiiTime = CurrentSample(1,end).SystemTimeStamp;
-
+                            %                             case FrameIndex==1
+                            %                                 sp.sendTrigger(TriggerToSend); % trigger
+                            case (EEGPass==1)
+                                sp.sendTrigger(TriggerToSend); % trigger
 
                         end
-                        CurrentSample = my_eyetracker.get_gaze_data();
-
                 end
+                switch DATA.useET
+                    case 1
+                        switch true
+                            %                             case FrameIndex==1
+                            %                                 TimeStamps(end+1,1) =TobiiOperations.get_system_time_stamp;
+                            %                                 TimeStamps(end,2)=TriggerToSend;
+                            case ( EEGPass==1)
+                                TimeStamps(end+1,1) =TobiiOperations.get_system_time_stamp;
+                                TimeStamps(end,2)=TriggerToSend;
 
+                        end
+                end
+                FrameIndex=FrameIndex+1;
+                TriggerToSend=0;
+                EEGPass=0;
                 if BreakMeOut ==1
                     break
                 end
-                ScreenFlipTime = FlipTime+(DATA.WaitFrameInput-0.5)*DATA.FlipInterval;
-                FlipTime=  Screen('Flip',Env.MainWindow,ScreenFlipTime);
-                %BIOSEMI HERE
-                DATA.ExperimentOne(blocks).EyeData(FrameIndex).FrameIndex =FrameIndex;
-                DATA.ExperimentOne(blocks).EyeData(FrameIndex).FlipTimeStamp=FlipTime;
-                FrameIndex=FrameIndex+1;
 
             end
 
@@ -559,17 +568,34 @@ for blocks = 1: nBlocks
 end
 DrawFormattedText(Env.MainWindow,sprintf('%s',Experiment1EndTxt),'center','center',[],120,[],[],2);
 Screen('DrawingFinished',Env.MainWindow);
+TriggerToSend=Env.Triggers.Exp.End;
 [FlipTime,~,EndFlip]=Screen('Flip',Env.MainWindow,[]);
+switch DATA.useEEG
+    case 1
+        sp.sendTrigger(TriggerToSend); % trigger
+end
+switch DATA.useET
+
+    case 1
+        TimeStamps(end+1,1) =TobiiOperations.get_system_time_stamp;
+        TimeStamps(end,2)= TriggerToSend;
+
+end
 FileName = ['ExptData\EXP1_',num2str(DATA.participantNum),'.mat'];
 save(FileName)
 ExcelFile = ['ExptData\EXP1\combined\myBehaviouralDataP', num2str(DATA.participantNum), '_B', num2str(blocks),'_Combined', '.xlsx'];
-
 if isfile(ExcelFile)==1
     ExcelFile = ['ExptData\EXP1\combined\myBehaviouralDataP', num2str(DATA.participantNum),'_B',num2str(blocks),'_Combined','DOUBLECHANGEPNUM', '.xlsx'];
 end
 writetable(struct2table(OutputData), ExcelFile);
+%% save attention
 
-%  my_eyetracker.stop_gaze_data();
-%trigger
-KbWait([],2)
+ExcelFile = ['ExptData\EXP1\combined\myAttentionDataP', num2str(DATA.participantNum), '_B', num2str(blocks),'_Combined', '.xlsx'];
+if isfile(ExcelFile)==1
+    ExcelFile = ['ExptData\EXP1\combined\myBehaviouralDataP', num2str(DATA.participantNum),'_B',num2str(blocks),'_Combined','DOUBLECHANGEPNUM', '.xlsx'];
+end
+writetable(struct2table(DATA.ExperimentOneAttentionCheck), ExcelFile);
+
+KbWait([],2);
+
 end

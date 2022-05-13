@@ -1,15 +1,17 @@
 %Written by Tess Barich 2022
 function ExperimentTwo(ConditionSequence)
 global Env DATA  Calib colour ResponseBoxCoords4 QuestionQuote ConfidenceQuote LowAnchor HighAnchor LineLength LineDivide ResponseBoxCoords1
+global MyEyeTracker sp TimeStamps OverallGazeData TobiiOperations
+
 %% The Adjustables - Paired Fates
 NumOfX =5;
 NumOfY=5;
 StimuliSizeX=50;
 StimuliSizeY=50;
-GapBetween =20;
+GapBetween =50;
 BlankX=300;
 BlankY =100;
-BlankYP =-15;
+BlankYP =-5;
 nBlocks =4;
 nTrials =4;
 nMaxAttempts =26;
@@ -19,7 +21,9 @@ LowAnchor ='Complete Guess';
 HighAnchor ='I am sure\n I am right';
 nTrials =4;
 nBlocks =4;
-ConditionSequence = [2,1,3,4];%randperm(4);
+Condition=[1,3,4];
+Condition=Shuffle(Condition);
+ConditionSequence = [Condition(1),1,Condition(2),Condition(3)];%randperm(4);
 SequenceOrder = [1,2,3,4]; % Built this in incase you ever want to change  the sequence presentation order. randperm(4);
 targetseq= SequenceOrder(2);
 distractorseqone= SequenceOrder(1);
@@ -71,11 +75,21 @@ Exp2ComprehensionCheck(Env.MainWindow,Env.OffScreenWindow,PracticeColourA,Practi
 [Env.ExperimentTwo.Coordinates,Env.ExperimentTwo.MinMaxXY]=DetermineXYCoords(Env.MainWindow,Env.MainWindow,NumOfX,NumOfY,StimuliSizeX,StimuliSizeY,GapBetween,BlankX,BlankY);
 
 %% Build the sequences
-if DATA.useET ==1;
-    RubbishET = my_eyetracker.get_gaze_data();
-end
-for blocks = 1: nBlocks
 
+for blocks = 1: nBlocks
+    TriggerToSend=Env.Triggers.Exp.StartBlock;
+    FlipTime=  Screen('Flip',Env.MainWindow,[]);
+    switch DATA.useEEG
+        case 1
+            sp.sendTrigger(TriggerToSend); % trigger
+    end
+    switch DATA.useET
+        case 1
+            TimeStamps(end+1,1) =TobiiOperations.get_system_time_stamp;
+            TimeStamps(end,2)= TriggerToSend;
+    end
+
+    TriggerToSend=0;
     BoxAnswer(:,blocks) = randi(2,[4,1]); % 1 = original sequence, 2 inverted sequence
     Env.BoxAnswer = BoxAnswer;
     for SequenceBuilding = 1:nBlocks
@@ -161,16 +175,63 @@ for blocks = 1: nBlocks
     [ResponseBoxCoords3,Env.ExperimentTwo.ResponseOne,Env.ExperimentTwo.ResponseTwo]= BuildMyResponseBoxes(Env.MainWindow,Env.OffScreenWindow,2,[AnswerQuote1;AnswerQuote2],ResponseBoxandTextColour,3,[Env.ExperimentTwo.MinMaxXY(1,1);Env.ExperimentTwo.MinMaxXY(3,1)],[Env.ExperimentTwo.MinMaxXY(4,1)+230;Env.ExperimentTwo.MinMaxXY(4,1)+230],200,100,12,16,[ColourBoxA;ColourBoxB]');
     FrameIndex =1;
     Env.ResponseBoxCoords =ResponseBoxCoords3;
+    BlockStartText =[sprintf("This set of trials will use %s and %s boxes. A colour has been randomly selected to be the primary colour.\nPress ENTER to begin the trials and click the boxes.",ColourBoxAStr,ColourBoxBStr)];
+    FrameIndex =1;
+    start =GetSecs;
+    MoveOn=0;
+    TriggerToSend=Env.Triggers.Exp.BlockStartText;
+
+    while MoveOn~=1
+        [keyboardDown,~,whichkey]=KbCheck;
+        DrawFormattedText(Env.MainWindow,sprintf('%s',BlockStartText),'center','center',[],120,[],[],2);
+        Screen('DrawingFinished',Env.MainWindow);
+
+        if (keyboardDown ==1 && KbName(whichkey)=="Return")
+            TriggerToSend=Env.Triggers.Exp.BlockEndText;
+
+            MoveOn=1;
+        end
+        [FlipTime,~,EndFlip]=Screen('Flip',Env.MainWindow,[]);
+        switch DATA.useEEG
+            case 1
+                switch true
+                    case FrameIndex==1
+                        sp.sendTrigger(TriggerToSend); % trigger
+                    case MoveOn==1
+                        sp.sendTrigger(TriggerToSend); % trigger
+
+                end
+        end
+
+        switch DATA.useET
+            case 1
+                switch true
+                    case FrameIndex==1
+                        TimeStamps(end+1,1) =TobiiOperations.get_system_time_stamp;
+                        TimeStamps(end,2)= TriggerToSend;
+                    case MoveOn==1
+                        TimeStamps(end+1,1) =TobiiOperations.get_system_time_stamp;
+                        TimeStamps(end,2)= TriggerToSend;
+                end
+        end
+        TriggerToSend=0;
+
+        FrameIndex =FrameIndex+1;
+    end
     if ConditionSequence(blocks)==1
         nTrials =5;
     else
         nTrials =4;
 
     end
+
+
     for Trials =1:nTrials
+        FrameIndex=1;
+
         switch true
             case Trials<=4
-                DATA.ExperimentTwo(blocks).EyeData(FrameIndex).Trigger = 110; % Trigger Given 10 - 1 represents experiment number and 0 represents start of each trial in each block.
+                TriggerToSend=Env.Triggers.Exp.StartTrial;
                 DATA.ExperimentTwo(blocks).Block(Trials).ParticipantNum = DATA.participantNum;
                 DATA.ExperimentTwo(blocks).Block(Trials).ParticipantAge = DATA.participantAge;
                 DATA.ExperimentTwo(blocks).Block(Trials).ParticipantGen = DATA.participantGen;
@@ -182,7 +243,7 @@ for blocks = 1: nBlocks
                 DATA.ExperimentTwo(blocks).Block(Trials).NumBoxtoDecision = 0;
                 NumBoxtoDecision = 0;
             case  Trials==5
-                DATA.ExperimentTwo(blocks).EyeData(FrameIndex).Trigger = 121; % Trigger Given 10 - 1 represents experiment number and 0 represents start of each trial in each block.
+                TriggerToSend=Env.Triggers.Attention.Start;
 
                 DATA.ExperimentTwoAttentionCheck(1).ParticipantNum = DATA.participantNum;
                 DATA.ExperimentTwoAttentionCheck(1).ParticipantAge = DATA.participantAge;
@@ -205,9 +266,19 @@ for blocks = 1: nBlocks
         for colourfill =1:width(BoxColour)
             colour(colourfill,:)= BoxColour(colourfill)';
         end
+        WaitSecs(intertrialinterval);
 
         FlipTime=Screen('Flip',Env.MainWindow,[]);
-        WaitSecs(intertrialinterval);
+        switch  DATA.useEEG
+            case 1
+                sp.sendTrigger(TriggerToSend); % trigger
+        end
+        switch DATA.useET
+            case 1
+                TimeStamps(end+1,1) =TobiiOperations.get_system_time_stamp;
+                TimeStamps(end,2)= TriggerToSend;
+        end
+
         start =GetSecs;
 
         for Attempts =1:nMaxAttempts
@@ -218,7 +289,8 @@ for blocks = 1: nBlocks
             ResponseHighlighter12 = Env.Colours.Black;
             KbQueueCreate(Env.MouseInfo{1,1}.index,[],2);
             KbQueueStart(Env.MouseInfo{1,1}.index);
-            CurrentSample =[];
+            EEGPass=0;
+
             %start =GetSecs;
             while LodgeAResponse <2
                 [keyIsDown]= KbQueueCheck(Env.MouseInfo{1,1}.index);
@@ -241,17 +313,51 @@ for blocks = 1: nBlocks
                         DrawFormattedText(Env.MainWindow,sprintf('%s',ConfidenceQuote),'center',600);
                     case 5
                         DrawFormattedText(Env.MainWindow,sprintf('%s',QuestionQuote),'center',600);
-                        %                     case 6
-                        %                         DrawFormattedText(Env.MainWindow,sprintf('%s',AttentionOneQ),'center',550);
-                    case 7
-                        DrawFormattedText(Env.MainWindow,sprintf('%s',AttentionTwoQ),'center',550);
+
+                        %                     case 7
+                        %                         DrawFormattedText(Env.MainWindow,sprintf('%s',AttentionTwoQ),'center',600);
                     case 8
                         DrawFormattedText(Env.MainWindow,sprintf('%s',AttentionThanks),'center',600);
 
                         if  (keyboardDown ==1 && KbName(whichkey)=="Return")
 
-                            LodgeAResponse=2; %add trigger
+                            LodgeAResponse=2;
+                            TriggerToSend=Env.Triggers.Attention.End;
+                            EEGPass=1;
+
                         end
+
+
+                end
+                switch true
+                    case Response ==2
+                        Screen('FillRect',Env.MainWindow,Env.Colours.White,[Env.ScreenInfo.Centre(1)-(LineLength/2),Env.ScreenInfo.Centre(2)+120,Env.ScreenInfo.Centre(1)+(LineLength/2),Env.ScreenInfo.Centre(2)+125]);
+                        TotalLengthLine = LineLength;
+                        LineDetails = [(Env.ScreenInfo.Centre(1)-(LineLength/2)),Env.ScreenInfo.Centre(2)+120,(Env.ScreenInfo.Centre(1)+(LineLength/2)),Env.ScreenInfo.Centre(2)+125];
+                        DrawFormattedText(Env.MainWindow,sprintf('%s',LowAnchor),LineDetails(1)-200,Env.ScreenInfo.Centre(2)+125);
+                        DrawFormattedText(Env.MainWindow,sprintf('%s',HighAnchor),LineDetails(3)+50,Env.ScreenInfo.Centre(2)+125);
+                        if ismembertol(x,LineDetails(1)-10:LineDetails(3))&& ismembertol(y,LineDetails(2)-20:LineDetails(4)+20)
+                            Difference = (LineDetails(3) -x)/2;
+                            NumberToDisplay = ceil((TotalLengthLine-Difference)/LineDivide);
+                            DrawFormattedText(Env.MainWindow,sprintf('%i',NumberToDisplay),'center',Env.ScreenInfo.Centre(2)+150);
+                        end
+                    case Response ==1||Response==5
+                        Screen('DrawTextures',Env.MainWindow,[Env.ExperimentTwo.ResponseOne(1);Env.ExperimentTwo.ResponseTwo(1)],[],[ResponseBoxCoords3]',[],[],[],[ResponseHighlighter1;ResponseHighlighter2]');
+
+                    case Response==6
+                        %  mask =[0,0,0,0];
+
+                        DrawFormattedText(Env.MainWindow,sprintf('%s',AttentionOneQ),'center',600);
+                        Screen('DrawTextures',Env.MainWindow,Env.ExperimentTwoPractice.ResponseOne,[],[ResponseBoxCoords1]',[],[],[],[ResponseHighlighter11;ResponseHighlighter12]');
+
+                    case Response==7
+                        % mask =[0,0,0,0];
+                        DrawFormattedText(Env.MainWindow,sprintf('%s',AttentionTwoQ),'center',600);
+
+                        DrawFormattedText(Env.MainWindow,sprintf('Press enter after you have typed response to lodge answer'),'center',750);
+
+
+                        [DATA.ExperimentTwoAttentionCheck(2).AttentionResponseAnswer]=GetEchoString(Env.MainWindow,'', Env.ScreenInfo.Centre(1),670,[0,0,0],[Env.Colours.LightGrey],1);
 
 
                 end
@@ -284,13 +390,18 @@ for blocks = 1: nBlocks
                     case any(CoordinatesIdx==1) && (Response==1 || Response==5)
                         switch true
                             case NumBoxtoDecision <25 && Trials<=4
+                                TriggerToSend=Env.Triggers.Practice.ResponseSeeMore;
+                                EEGPass=1;
+
                                 colour(:,CoordinatesIdx)=cell2mat(Sequence(Attempts,Trials))';
                                 NumBoxtoDecision = NumBoxtoDecision + 1;
                                 DATA.ExperimentTwo(blocks).Block(Trials).NumBoxtoDecision = NumBoxtoDecision;
                                 BreakMeOut = 1;
                                 LodgeAResponse =0;
-                                %trigger
                             case NumBoxtoDecision ==0 && Trials==5
+                                TriggerToSend=Env.Triggers.Attention.StartSmile;
+                                EEGPass=1;
+
                                 colour(:,CoordinatesIdx)=ColourBoxA;
                                 NumBoxtoDecision = NumBoxtoDecision + 1;
                                 DATA.ExperimentTwoAttentionCheck(1).NumBoxestoQuestion=NumBoxtoDecision;
@@ -299,18 +410,24 @@ for blocks = 1: nBlocks
                                 Response =5;
                                 LodgeAResponse =0;
                             case NumBoxtoDecision >0 && Trials==5
+                                TriggerToSend=Env.Triggers.Attention.StartQuestions;
+                                EEGPass=1;
+
                                 DATA.ExperimentTwoAttentionCheck(1).NumBoxestoQuestion=NumBoxtoDecision;
                                 % colour(:,CoordinatesIdx)=ColourBoxA;
                                 Response =6;
                                 LodgeAResponse =1;
 
                             case NumBoxtoDecision >=25 && Trials<=4
+                                TriggerToSend=Env.Triggers.Exp.ResponseMaxNumReached;
+                                EEGPass=1;
                                 BreakMeOut = 0;
                                 LodgeAResponse =0;
                                 DATA.ExperimentTwo(blocks).Block(Trials).NumBoxtoDecision = nMaxAttempts;%DATA.ExperimentTwo(blocks).Block(Trials).NumBoxtoDecision+1;
                         end
                     case (NumBoxtoDecision>0 && any(keyIsDown==1) && ismembertol(x,ResponseBoxCoords3(1,1):ResponseBoxCoords3(1,3))&& ismembertol(y,ResponseBoxCoords3(1,2):ResponseBoxCoords3(1,4))&& Response ==1 &&LodgeAResponse==0);
-                        DATA.ExperimentTwo(blocks).EyeData(FrameIndex).Trigger = 114; % Response Given 14 - 1 represents experiment number and 4 represents Response of A in each block
+                        TriggerToSend=Env.Triggers.Practice.ResponseA;
+                        EEGPass=1;
                         DATA.ExperimentTwo(blocks).Block(Trials).BoxResponseAnswer="ColourA";
                         DATA.ExperimentTwo(blocks).Block(Trials).BoxResponseColour=AnswerQuote1;
                         DATA.ExperimentTwo(blocks).Block(Trials).ResponseRT=GetSecs-start;
@@ -318,7 +435,8 @@ for blocks = 1: nBlocks
                         LodgeAResponse =1;
                         Response =2;
                     case (NumBoxtoDecision>0 && any(keyIsDown==1) && ismembertol(x,ResponseBoxCoords3(2,1):ResponseBoxCoords3(2,3))&& ismembertol(y,ResponseBoxCoords3(2,2):ResponseBoxCoords3(2,4)) && Response ==1 && LodgeAResponse==0);
-                        DATA.ExperimentTwo(blocks).EyeData(FrameIndex).Trigger = 115; % Response Given 15 - 1 represents experiment number and 5 represents Response of B for each trial in each block
+                        TriggerToSend=Env.Triggers.Practice.ResponseB;
+                        EEGPass=1;
                         DATA.ExperimentTwo(blocks).Block(Trials).BoxResponseAnswer = "ColourB";
                         DATA.ExperimentTwo(blocks).Block(Trials).BoxResponseColour=AnswerQuote2;
                         DATA.ExperimentTwo(blocks).Block(Trials).ResponseRT=GetSecs-start;
@@ -328,39 +446,43 @@ for blocks = 1: nBlocks
 
 
                     case (Response ==2 && any(keyIsDown==1) && ismembertol(x,LineDetails(1)-10:LineDetails(3))&& ismembertol(y,LineDetails(2)-20:LineDetails(4)+20)&& LodgeAResponse==1)
+                        TriggerToSend=Env.Triggers.Practice.ConfidenceResponse;
+                        EEGPass=1;
                         DATA.ExperimentTwo(blocks).Block(Trials).Confidence = NumberToDisplay;
                         DATA.ExperimentTwo(blocks).Block(Trials).ConfidenceRT = GetSecs-ResponseSystemTime;
 
-                        DATA.ExperimentTwo(blocks).EyeData(FrameIndex).Trigger = 116; % Response Given 16 - 1 represents experiment number and 6 represents confidence Response for each trial in each block
 
                         LodgeAResponse =2;
 
                     case (NumBoxtoDecision>0 && any(keyIsDown==1) && ismembertol(x,ResponseBoxCoords3(1,1):ResponseBoxCoords3(1,3))&& ismembertol(y,ResponseBoxCoords3(1,2):ResponseBoxCoords3(1,4))&& Response ==5 &&LodgeAResponse==0);
+                        TriggerToSend=Env.Triggers.Attention.StartQuestions;
+                        EEGPass=1;
+
                         ResponseSystemTime=GetSecs;
 
                         LodgeAResponse =1;
                         Response =6;
                     case (NumBoxtoDecision>0 && any(keyIsDown==1) && ismembertol(x,ResponseBoxCoords3(2,1):ResponseBoxCoords3(2,3))&& ismembertol(y,ResponseBoxCoords3(2,2):ResponseBoxCoords3(2,4)) && Response ==5 && LodgeAResponse==0);
+                        TriggerToSend=Env.Triggers.Attention.StartQuestions;
+                        EEGPass=1;
 
                         ResponseSystemTime=GetSecs;
                         LodgeAResponse =1;
                         Response =6;
 
 
-
-
-
                     case (any(keyIsDown==1) && ismembertol(x,ResponseBoxCoords1(2,1):ResponseBoxCoords1(2,3))&& ismembertol(y,ResponseBoxCoords1(2,2):ResponseBoxCoords1(2,4)) && Response ==6 && LodgeAResponse==1)
-                        DATA.ExperimentTwo(blocks).EyeData(FrameIndex).Trigger = 117; % Response Given 15 - 1 represents experiment number and 5 represents Response of B for each trial in each block
 
-                        DATA.ExperimentTwoAttentionCheck(1).AttentionResponseAnswer.AttentionResponseAnswer = "No";
+                        TriggerToSend=Env.Triggers.Attention.NoNoticedResponse;
+                        EEGPass=1;
+                        DATA.ExperimentTwoAttentionCheck(1).AttentionResponseAnswer = "No";
                         DATA.ExperimentTwoAttentionCheck(1).AttentionResponseRT=GetSecs-start;
                         JarResponseSystemTime=GetSecs;
                         Response =8;
                         LodgeAResponse =1;
                     case (any(keyIsDown==1) && ismembertol(x,ResponseBoxCoords1(1,1):ResponseBoxCoords1(1,3))&& ismembertol(y,ResponseBoxCoords1(1,2):ResponseBoxCoords1(1,4)) && Response ==6 && LodgeAResponse==1)
-                        DATA.ExperimentTwo(blocks).EyeData(FrameIndex).Trigger = 118; % Response Given 15 - 1 represents experiment number and 5 represents Response of B for each trial in each block
-
+                        TriggerToSend=Env.Triggers.Attention.YesNoticedResponse;
+                        EEGPass=1;
                         DATA.ExperimentTwoAttentionCheck(1).AttentionResponseAnswer = "Yes";
                         DATA.ExperimentTwoAttentionCheck(1).AttentionResponseRT=GetSecs-start;
                         JarResponseSystemTime=GetSecs;
@@ -368,8 +490,8 @@ for blocks = 1: nBlocks
                         LodgeAResponse=1;
 
                     case (Response==7&& ~isempty(DATA.ExperimentTwoAttentionCheck(2).AttentionResponseAnswer))
-                        DATA.ExperimentTwo(blocks).EyeData(FrameIndex).Trigger = 119; % Response Given 15 - 1 represents experiment number and 5 represents Response of B for each trial in each block
-
+                        TriggerToSend=Env.Triggers.Attention.EndFreeResponse;
+                        EEGPass=1;
                         DATA.ExperimentTwoAttentionCheck(2).AttentionResponseRT=GetSecs-JarResponseSystemTime;
                         JarResponseSystemTime=GetSecs;
                         KbReleaseWait;
@@ -383,41 +505,41 @@ for blocks = 1: nBlocks
                 Screen('FillRect',Env.MainWindow,colour,Env.ExperimentTwo.Coordinates);
 
 
-                switch true
-                    case Response ==2
-                        Screen('FillRect',Env.MainWindow,Env.Colours.White,[Env.ScreenInfo.Centre(1)-(LineLength/2),Env.ScreenInfo.Centre(2)+120,Env.ScreenInfo.Centre(1)+(LineLength/2),Env.ScreenInfo.Centre(2)+125]);
-                        TotalLengthLine = LineLength;
-                        LineDetails = [(Env.ScreenInfo.Centre(1)-(LineLength/2)),Env.ScreenInfo.Centre(2)+120,(Env.ScreenInfo.Centre(1)+(LineLength/2)),Env.ScreenInfo.Centre(2)+125];
-                        DrawFormattedText(Env.MainWindow,sprintf('%s',LowAnchor),LineDetails(1)-200,Env.ScreenInfo.Centre(2)+125);
-                        DrawFormattedText(Env.MainWindow,sprintf('%s',HighAnchor),LineDetails(3)+50,Env.ScreenInfo.Centre(2)+125);
-                        if ismembertol(x,LineDetails(1)-10:LineDetails(3))&& ismembertol(y,LineDetails(2)-20:LineDetails(4)+20)
-                            Difference = (LineDetails(3) -x)/2;
-                            NumberToDisplay = ceil((TotalLengthLine-Difference)/LineDivide);
-                            DrawFormattedText(Env.MainWindow,sprintf('%i',NumberToDisplay),'center',Env.ScreenInfo.Centre(2)+150);
-                        end
-                    case Response ==1||Response==5
-                        Screen('DrawTextures',Env.MainWindow,[Env.ExperimentTwo.ResponseOne(1);Env.ExperimentTwo.ResponseTwo(1)],[],[ResponseBoxCoords3]',[],[],[],[ResponseHighlighter1;ResponseHighlighter2]');
-
-                    case Response==6
-                        %  mask =[0,0,0,0];
-
-                        DrawFormattedText(Env.MainWindow,sprintf('%s',AttentionOneQ),'center',550);
-                        Screen('DrawTextures',Env.MainWindow,Env.ExperimentTwoPractice.ResponseOne,[],[ResponseBoxCoords1]',[],[],[],[ResponseHighlighter11;ResponseHighlighter12]');
-
-                    case Response==7
-                        % mask =[0,0,0,0];
-                        DrawFormattedText(Env.MainWindow,sprintf('%s',AttentionTwoQ),'center',550);
-
-                        DrawFormattedText(Env.MainWindow,sprintf('Press enter after you have typed response to lodge answer'),'center',700);
-
-
-                        [DATA.ExperimentTwoAttentionCheck(2).AttentionResponseAnswer]=GetEchoString(Env.MainWindow,'', Env.ScreenInfo.Centre(1),600,[0,0,0],[Env.Colours.LightGrey],1);
-
-
-
-
-
-                end
+                %                 switch true
+                %                     case Response ==2
+                %                         Screen('FillRect',Env.MainWindow,Env.Colours.White,[Env.ScreenInfo.Centre(1)-(LineLength/2),Env.ScreenInfo.Centre(2)+120,Env.ScreenInfo.Centre(1)+(LineLength/2),Env.ScreenInfo.Centre(2)+125]);
+                %                         TotalLengthLine = LineLength;
+                %                         LineDetails = [(Env.ScreenInfo.Centre(1)-(LineLength/2)),Env.ScreenInfo.Centre(2)+120,(Env.ScreenInfo.Centre(1)+(LineLength/2)),Env.ScreenInfo.Centre(2)+125];
+                %                         DrawFormattedText(Env.MainWindow,sprintf('%s',LowAnchor),LineDetails(1)-200,Env.ScreenInfo.Centre(2)+125);
+                %                         DrawFormattedText(Env.MainWindow,sprintf('%s',HighAnchor),LineDetails(3)+50,Env.ScreenInfo.Centre(2)+125);
+                %                         if ismembertol(x,LineDetails(1)-10:LineDetails(3))&& ismembertol(y,LineDetails(2)-20:LineDetails(4)+20)
+                %                             Difference = (LineDetails(3) -x)/2;
+                %                             NumberToDisplay = ceil((TotalLengthLine-Difference)/LineDivide);
+                %                             DrawFormattedText(Env.MainWindow,sprintf('%i',NumberToDisplay),'center',Env.ScreenInfo.Centre(2)+150);
+                %                         end
+                %                     case Response ==1||Response==5
+                %                         Screen('DrawTextures',Env.MainWindow,[Env.ExperimentTwo.ResponseOne(1);Env.ExperimentTwo.ResponseTwo(1)],[],[ResponseBoxCoords3]',[],[],[],[ResponseHighlighter1;ResponseHighlighter2]');
+                %
+                %                     case Response==6
+                %                         %  mask =[0,0,0,0];
+                %
+                %                         DrawFormattedText(Env.MainWindow,sprintf('%s',AttentionOneQ),'center',600);
+                %                         Screen('DrawTextures',Env.MainWindow,Env.ExperimentTwoPractice.ResponseOne,[],[ResponseBoxCoords1]',[],[],[],[ResponseHighlighter11;ResponseHighlighter12]');
+                %
+                %                     case Response==7
+                %                         % mask =[0,0,0,0];
+                %                         DrawFormattedText(Env.MainWindow,sprintf('%s',AttentionTwoQ),'center',600);
+                %
+                %                         DrawFormattedText(Env.MainWindow,sprintf('Press enter after you have typed response to lodge answer'),'center',750);
+                %
+                %
+                %                         [DATA.ExperimentTwoAttentionCheck(2).AttentionResponseAnswer]=GetEchoString(Env.MainWindow,'', Env.ScreenInfo.Centre(1),670,[0,0,0],[Env.Colours.LightGrey],1);
+                %
+                %
+                %
+                %
+                %
+                %                 end
 
                 if Response==5
                     Screen('DrawTexture',Env.MainWindow,Env.AttentionCheckTex,[],smilecoords,[],[],[],[mask]);
@@ -436,53 +558,46 @@ for blocks = 1: nBlocks
                 ResponseHighlighter2 = Env.Colours.White;
                 ResponseHighlighter11 =Env.Colours.Black;
                 ResponseHighlighter12 = Env.Colours.Black;
-                switch DATA.useET
-                    case 0
-                        DATA.ExperimentTwo(blocks).EyeData(FrameIndex).SystemTime = GetSecs;
-                        DATA.ExperimentTwo(blocks).EyeData(FrameIndex).OnsetTime =  DATA.ExperimentTwo(blocks).EyeData(FrameIndex).SystemTime  -start;
-
-                    case 1
-                        switch true
-                            case isempty(CurrentSample)==1
-
-                                DATA.ExperimentTwo(blocks).EyeData(FrameIndex).TobiiLeftEyePos = FirstPassET(1,end).LeftEye.GazePoint.OnDisplayArea;
-                                DATA.ExperimentTwo(blocks).EyeData(FrameIndex).TobiiRightEyePos = FirstPassET(1,end).RightEye.GazePoint.OnDisplayArea;
-                                DATA.ExperimentTwo(blocks).EyeData(FrameIndex).TobiiLeftEyePupil = FirstPassET(1,end).LeftEye.Pupil.Diameter;
-                                DATA.ExperimentTwo(blocks).EyeData(FrameIndex).TobiiRightEyePupil = FirstPassET(1,end).LeftEye.Pupil.Diameter;
-                                DATA.ExperimentTwo(blocks).EyeData(FrameIndex).TobiiTime = FirstPassET(1,end).SystemTimeStamp;
 
 
-                            case isempty(CurrentSample)==0
 
-                                DATA.ExperimentTwo(blocks).EyeData(FrameIndex).TobiiLeftEyePos= CurrentSample(1,end).LeftEye.GazePoint.OnDisplayArea;
-                                DATA.ExperimentTwo(blocks).EyeData(FrameIndex).TobiiRightEyePos  = CurrentSample(1,end).RightEye.GazePoint.OnDisplayArea;
-                                DATA.ExperimentTwo(blocks).EyeData(FrameIndex).TobiiLeftEyePupil = CurrentSample(1,end).LeftEye.Pupil.Diameter;
-                                DATA.ExperimentTwo(blocks).EyeData(FrameIndex).TobiiRightEyePupil = CurrentSample(1,end).LeftEye.Pupil.Diameter;
-                                DATA.ExperimentTwo(blocks).EyeData(FrameIndex).TobiiTime = CurrentSample(1,end).SystemTimeStamp;
-                        end
-                        CurrentSample = my_eyetracker.get_gaze_data();
-
-                end
-
-                if BreakMeOut ==1
-                    break
-                end
                 ScreenFlipTime = FlipTime+(DATA.WaitFrameInput-0.5)*DATA.FlipInterval;
                 FlipTime=  Screen('Flip',Env.MainWindow,ScreenFlipTime);
-                %BIOSEMI HERE
-                DATA.ExperimentTwo(blocks).EyeData(FrameIndex).FrameIndex =FrameIndex;
-                DATA.ExperimentTwo(blocks).EyeData(FrameIndex).FlipTimeStamp=FlipTime;
-                FrameIndex=FrameIndex+1;
+                switch  DATA.useEEG
+                    case 1
+                        switch true
+                            case (EEGPass==1)
+                                sp.sendTrigger(TriggerToSend); % trigger
 
+                        end
+                end
+                switch DATA.useET
+                    case 1
+                        switch true
+                            case ( EEGPass==1)
+                                TimeStamps(end+1,1) =TobiiOperations.get_system_time_stamp;
+                                TimeStamps(end,2)=TriggerToSend;
+
+                        end
+                end
+                FrameIndex=FrameIndex+1;
+                TriggerToSend=0;
+                EEGPass=0;
                 if BreakMeOut ==1
                     break
                 end
-
-
             end
+
+
+            if LodgeAResponse ==2
+                break
+            end
+
         end
     end
-%% First, write a Matlab file filled with all relevant DATA.
+
+
+    %% First, write a Matlab file filled with all relevant DATA.
     if exist('ExptData', 'dir') == 0
         mkdir('ExptData\EXP2');
     end
@@ -506,6 +621,17 @@ end
 DrawFormattedText(Env.MainWindow,sprintf('%s',Experiment2EndTxt),'center','center',[],120,[],[],2);
 Screen('DrawingFinished',Env.MainWindow);
 [FlipTime,~,EndFlip]=Screen('Flip',Env.MainWindow,[]);
+switch DATA.useEEG
+    case 1
+        sp.sendTrigger(TriggerToSend); % trigger
+end
+switch DATA.useET
+
+    case 1
+        TimeStamps(end+1,1) =TobiiOperations.get_system_time_stamp;
+        TimeStamps(end,2)= TriggerToSend;
+
+end
 FileName = ['ExptData\EXP2_',num2str(DATA.participantNum),'.mat'];
 save(FileName)
 ExcelFile = ['ExptData\EXP2\combined\myBehaviouralDataP', num2str(DATA.participantNum), '_B', num2str(blocks),'_Combined', '.xlsx'];
@@ -515,7 +641,13 @@ if isfile(ExcelFile)==1
 end
 writetable(struct2table(OutputData), ExcelFile);
 
-%  my_eyetracker.stop_gaze_data();
-%trigger
-KbWait([],2)
+%% save attention
+
+ExcelFile = ['ExptData\EXP2\combined\myAttentionDataP', num2str(DATA.participantNum), '_B', num2str(blocks),'_Combined', '.xlsx'];
+if isfile(ExcelFile)==1
+    ExcelFile = ['ExptData\EXP2\combined\myBehaviouralDataP', num2str(DATA.participantNum),'_B',num2str(blocks),'_Combined','DOUBLECHANGEPNUM', '.xlsx'];
+end
+writetable(struct2table(DATA.ExperimentTwoAttentionCheck), ExcelFile);
+
+KbWait([],2);
 end
